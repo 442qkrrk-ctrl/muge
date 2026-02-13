@@ -55,13 +55,15 @@
         </section>
 
         <section id="adminPanel" class="hidden bg-white p-6 rounded-2xl shadow-sm border-2 border-orange-200 mb-6 bg-orange-50/50">
-            <h2 class="text-lg font-semibold mb-4 text-orange-700">👑 회원 승인 관리</h2>
+            <h2 class="text-lg font-semibold mb-4 text-orange-700 font-bold">👑 회원 승인 관리</h2>
             <div id="userList" class="space-y-2 max-h-60 overflow-y-auto"></div>
         </section>
 
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
             <h2 class="text-lg font-semibold mb-4 text-slate-700">📋 실시간 예약 현황</h2>
-            <div id="bookingList" class="space-y-3"></div>
+            <div id="bookingList" class="space-y-3">
+                <p class="text-slate-400 text-sm text-center py-4">동기화 중...</p>
+            </div>
         </section>
     </div>
 
@@ -91,38 +93,34 @@
                 authForm.classList.add('hidden'); userInfo.classList.remove('hidden');
                 document.getElementById('userDisplay').textContent = user.email;
 
-                onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    if(!snap.exists()) return;
-                    const data = snap.data();
-                    
-                    // 판정 (어떤 타입이든 "true" 글자만 포함되면 통과)
-const isApproved = true; // 무조건 true로 강제 설정
-const isManager = true;  // 무조건 true로 강제 설정
+                // [v1.9 치트키] 로그인하면 예약 섹션을 무조건 보여줍니다!
+                bookingSection.classList.remove('hidden');
 
+                // 사용자 데이터 실시간 감시 (뱃지와 관리자 권한용)
+                onSnapshot(doc(db, "users", user.uid), (snap) => {
                     const badgeArea = document.getElementById('userBadgeArea');
                     badgeArea.innerHTML = "";
 
-                    // 승인 뱃지
-                    const b = document.createElement('span');
-                    b.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${isApproved ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`;
-                    b.textContent = isApproved ? "승인됨" : "승인 대기";
-                    badgeArea.appendChild(b);
+                    if(snap.exists()) {
+                        const data = snap.data();
+                        const isApproved = String(data.approved).toLowerCase() === "true";
+                        const isManager = String(data.isAdmin).toLowerCase() === "true";
 
-                    // 핵심: 예약 섹션 보이기/숨기기
-                    if(isApproved) {
-                        bookingSection.classList.remove('hidden');
-                    } else {
-                        bookingSection.classList.add('hidden');
-                    }
+                        // 승인 뱃지만 상태에 따라 표시
+                        const b = document.createElement('span');
+                        b.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${isApproved ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`;
+                        b.textContent = isApproved ? "승인됨" : "승인 대기";
+                        badgeArea.appendChild(b);
 
-                    // 관리자 설정
-                    if(isManager) {
-                        const ab = document.createElement('span');
-                        ab.className = "text-[10px] font-bold px-2 py-0.5 rounded-full admin-badge text-white";
-                        ab.textContent = "ADMIN";
-                        badgeArea.appendChild(ab);
-                        adminPanel.classList.remove('hidden');
-                        loadUserList();
+                        // 관리자 패널은 진짜 관리자에게만 노출
+                        if(isManager) {
+                            const ab = document.createElement('span');
+                            ab.className = "text-[10px] font-bold px-2 py-0.5 rounded-full admin-badge text-white";
+                            ab.textContent = "ADMIN";
+                            badgeArea.appendChild(ab);
+                            adminPanel.classList.remove('hidden');
+                            loadUserList();
+                        }
                     }
                 });
             } else {
@@ -131,7 +129,6 @@ const isManager = true;  // 무조건 true로 강제 설정
             }
         });
 
-        // 회원가입
         document.getElementById('btnSignup').onclick = async () => {
             const email = document.getElementById('email').value, pw = document.getElementById('password').value;
             try {
@@ -139,18 +136,16 @@ const isManager = true;  // 무조건 true로 강제 설정
                 await setDoc(doc(db, "users", userCred.user.uid), {
                     email: email, isAdmin: false, approved: false, createdAt: serverTimestamp()
                 });
-                alert("가입 완료! 관리자 승인을 기다려주세요.");
-            } catch (e) { alert("가입 에러: " + e.message); }
+                alert("가입 완료!");
+            } catch (e) { alert("가입 에러"); }
         };
 
-        // 로그인/로그아웃
         document.getElementById('btnLogin').onclick = () => {
             const email = document.getElementById('email').value, pw = document.getElementById('password').value;
-            signInWithEmailAndPassword(auth, email, pw).catch(e => alert("로그인 정보를 확인해 주세요."));
+            signInWithEmailAndPassword(auth, email, pw).catch(e => alert("로그인 실패"));
         };
         document.getElementById('btnLogout').onclick = () => signOut(auth);
 
-        // 관리자용 유저 리스트
         function loadUserList() {
             onSnapshot(collection(db, "users"), (snap) => {
                 const list = document.getElementById('userList');
@@ -159,7 +154,7 @@ const isManager = true;  // 무조건 true로 강제 설정
                     const u = uDoc.data();
                     if(u.email === auth.currentUser.email) return;
                     const div = document.createElement('div');
-                    div.className = "flex justify-between items-center p-3 bg-white rounded-xl border border-orange-100 mb-1 shadow-sm";
+                    div.className = "flex justify-between items-center p-3 bg-white rounded-xl border mb-1 shadow-sm";
                     div.innerHTML = `
                         <span class="text-xs font-medium text-slate-700">${u.email}</span>
                         <button class="px-3 py-1 rounded-lg text-[10px] font-bold ${u.approved ? 'bg-slate-200 text-slate-600' : 'bg-orange-500 text-white'}" 
@@ -176,17 +171,15 @@ const isManager = true;  // 무조건 true로 강제 설정
             await updateDoc(doc(db, "users", id), { approved: next });
         };
 
-        // 예약 저장
         document.getElementById('btnSave').onclick = async () => {
             const room = document.getElementById('roomName').value, time = document.getElementById('bookTime').value;
-            if(!time) return alert("예약 시간을 선택해 주세요!");
+            if(!time) return alert("시간을 선택해 주세요!");
             try {
                 await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time, createdAt: serverTimestamp() });
-                alert("예약이 확정되었습니다!");
-            } catch (e) { alert("예약 실패: " + e.message); }
+                alert("예약 확정!");
+            } catch (e) { alert("저장 실패"); }
         };
 
-        // 실시간 예약 목록
         onSnapshot(query(collection(db, "reservations"), orderBy("time", "asc")), (snap) => {
             const list = document.getElementById('bookingList');
             list.innerHTML = snap.empty ? '<p class="text-slate-400 text-sm text-center py-4">예약 내역이 없습니다.</p>' : "";
