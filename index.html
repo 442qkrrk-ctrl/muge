@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Muge 통합 시스템 v3.0</title>
+    <title>Muge 통합 시스템 v3.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -11,16 +11,24 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         #bookingSection, #adminPanel, #userInfo { display: none; }
-        .fc { background: white; padding: 10px; border-radius: 1rem; border: 1px solid #e2e8f0; max-height: 700px; }
-        .fc-event { cursor: pointer; transition: opacity 0.2s; }
-        .fc-event:hover { opacity: 0.8; }
+        
+        /* [v3.1 가독성 커스텀] */
+        .fc { background: white; padding: 10px; border-radius: 1rem; border: 1px solid #e2e8f0; }
+        
+        /* 이벤트 내부 텍스트 스타일링 */
+        .fc-event-main { padding: 4px !important; }
+        .event-time { font-size: 0.7rem; opacity: 0.9; font-weight: 400; display: block; margin-bottom: 2px; border-bottom: 1px solid rgba(255,255,255,0.3); }
+        .event-desc { font-size: 0.8rem; font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* 캘린더 높이 조절 */
+        .fc-timegrid-slot { height: 3em !important; } 
     </style>
 </head>
 <body class="min-h-screen py-10">
 
     <div class="max-w-4xl mx-auto px-4">
         <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">🎸 Muge 통합 시스템 v3.0</h1>
+            <h1 class="text-3xl font-bold text-slate-800 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">🎸 Muge v3.1</h1>
         </header>
 
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
@@ -58,12 +66,12 @@
         </section>
 
         <section class="mb-10">
-            <h2 class="text-lg font-semibold mb-4 text-slate-700">🗓️ 예약 현황 (클릭 시 관리)</h2>
+            <h2 class="text-lg font-semibold mb-4 text-slate-700">🗓️ 실시간 현황 (시간 / 장소·예약자)</h2>
             <div id="calendar"></div>
         </section>
 
         <section id="adminPanel" class="bg-white p-6 rounded-2xl shadow-sm border-2 border-orange-200 mb-6 bg-orange-50/50">
-            <h2 class="text-lg font-semibold mb-4 text-orange-700 font-bold">👑 관리자용 회원 승인</h2>
+            <h2 class="text-lg font-semibold mb-4 text-orange-700 font-bold text-center">👑 회원 관리</h2>
             <div id="userList" class="space-y-2"></div>
         </section>
     </div>
@@ -88,7 +96,7 @@
 
         let currentUserData = null;
 
-        // 시간 옵션 (09:00~22:00)
+        // 시간 옵션
         const timeSelect = document.getElementById('bookTimeSelect');
         for (let h = 9; h <= 22; h++) {
             for (let m of ['00', '30']) {
@@ -100,7 +108,7 @@
             }
         }
 
-        // 캘린더
+        // 캘린더 설정
         let calendar;
         const calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
@@ -109,62 +117,58 @@
             slotMinTime: '09:00:00',
             slotMaxTime: '22:00:00',
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-            events: [],
+            // [v3.1 핵심: 텍스트 렌더링 방식 변경]
+            eventContent: function(arg) {
+                let timeStr = arg.timeText;
+                let room = arg.event.title.split(' | ')[0];
+                let user = arg.event.title.split(' | ')[1];
+                
+                let arrayOfDomNodes = [
+                    Object.assign(document.createElement('div'), { innerHTML: `<span class="event-time">${timeStr}</span>`, className: 'fc-event-main-frame' }),
+                    Object.assign(document.createElement('div'), { innerHTML: `<span class="event-desc">${room} · ${user}</span>` })
+                ];
+                return { domNodes: arrayOfDomNodes };
+            },
             eventClick: async function(info) {
-                const eventId = info.event.id;
                 const ownerEmail = info.event.extendedProps.user;
-                const isAdmin = currentUserData?.isAdmin === true;
-                const isOwner = auth.currentUser?.email === ownerEmail;
-
-                // [핵심 로직] 본인이거나 관리자일 때만 삭제/수정 가능
-                if (isOwner || isAdmin) {
-                    if (confirm(`[${info.event.title}]\n이 예약을 취소(삭제)하시겠습니까?`)) {
-                        try {
-                            await deleteDoc(doc(db, "reservations", eventId));
-                            alert("삭제되었습니다.");
-                        } catch(e) { alert("삭제 실패: " + e.message); }
+                if (auth.currentUser?.email === ownerEmail || currentUserData?.isAdmin) {
+                    if (confirm(`이 예약을 취소하시겠습니까?\n장소: ${info.event.title}`)) {
+                        await deleteDoc(doc(db, "reservations", info.event.id));
+                        alert("삭제되었습니다.");
                     }
-                } else {
-                    alert("본인의 예약만 관리할 수 있습니다.");
-                }
+                } else { alert("권한이 없습니다."); }
             }
         });
         calendar.render();
 
+        // 인증/저장/현황 로직 (생략 - v3.0과 동일하되 title 저장 형식만 변경)
         onAuthStateChanged(auth, (user) => {
-            const authForm = document.getElementById('authForm'), userInfo = document.getElementById('userInfo');
-            const bookingSection = document.getElementById('bookingSection'), adminPanel = document.getElementById('adminPanel');
             if (user) {
-                authForm.style.display = 'none'; userInfo.style.display = 'flex'; bookingSection.style.display = 'block';
+                userInfo.style.display = 'flex'; authForm.style.display = 'none'; bookingSection.style.display = 'block';
                 document.getElementById('userDisplay').textContent = user.email;
                 onSnapshot(doc(db, "users", user.uid), (snap) => {
                     if(snap.exists()) {
                         currentUserData = snap.data();
-                        const bArea = document.getElementById('userBadgeArea');
-                        bArea.innerHTML = `<span class="bg-blue-100 p-1 rounded">${currentUserData.isAdmin ? '전체관리자' : '일반회원'}</span>`;
+                        document.getElementById('userBadgeArea').innerHTML = `<span class="bg-blue-100 px-2 rounded">${currentUserData.isAdmin ? '관리자' : '일반'}</span>`;
                         if(currentUserData.isAdmin) { adminPanel.style.display = 'block'; loadUserList(); }
                     }
                 });
-            } else {
-                authForm.style.display = 'block'; userInfo.style.display = 'none'; bookingSection.style.display = 'none'; adminPanel.style.display = 'none';
-            }
+            } else { userInfo.style.display = 'none'; authForm.style.display = 'block'; bookingSection.style.display = 'none'; adminPanel.style.display = 'none'; }
         });
 
         document.getElementById('btnSave').onclick = async () => {
             const room = document.getElementById('roomName').value;
             const date = document.getElementById('bookDate').value;
             const time = document.getElementById('bookTimeSelect').value;
-            if(!date) return alert("날짜 선택 필수");
-            const selectedTimestamp = new Date(`${date}T${time}`).getTime();
-            try {
-                const q = query(collection(db, "reservations"), where("room", "==", room));
-                const snap = await getDocs(q);
-                let isConflict = false;
-                snap.forEach(d => { if (Math.abs(selectedTimestamp - new Date(d.data().time).getTime()) < 2 * 60 * 60 * 1000) isConflict = true; });
-                if (isConflict) return alert("❌ 해당 시설에 2시간 이내 예약이 이미 존재합니다.");
-                await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time: `${date}T${time}` });
-                alert("✅ 예약 완료!");
-            } catch (e) { alert(e.message); }
+            if(!date) return alert("날짜 선택!");
+            const fullTime = `${date}T${time}`;
+            const q = query(collection(db, "reservations"), where("room", "==", room));
+            const snap = await getDocs(q);
+            let isConflict = false;
+            snap.forEach(d => { if (Math.abs(new Date(fullTime).getTime() - new Date(d.data().time).getTime()) < 2*60*60*1000) isConflict = true; });
+            if (isConflict) return alert("중복!");
+            await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time: fullTime });
+            alert("예약 완료!");
         };
 
         onSnapshot(collection(db, "reservations"), (snap) => {
@@ -172,8 +176,9 @@
             snap.forEach(doc => {
                 const d = doc.data();
                 events.push({
-                    id: doc.id, // 삭제를 위해 문서 ID 저장
-                    title: `${d.room} (${d.user.split('@')[0]})`,
+                    id: doc.id,
+                    // 장소와 예약자를 구분자(|)로 저장하여 나중에 쪼개서 사용
+                    title: `${d.room} | ${d.user.split('@')[0]}`,
                     start: d.time,
                     backgroundColor: getRoomColor(d.room),
                     borderColor: 'transparent',
@@ -188,28 +193,20 @@
             const colors = { "밴드실": "#ef4444", "제빵실": "#f59e0b", "공작실": "#10b981", "강의실": "#3b82f6", "다목적실": "#8b5cf6" };
             return colors[room] || "#64748b";
         }
-
+        
         document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
         document.getElementById('btnSignup').onclick = async () => {
             const u = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
             await setDoc(doc(db, "users", u.user.uid), { email: emailInput.value, approved: false, isAdmin: false });
         };
         document.getElementById('btnLogout').onclick = () => signOut(auth);
-
         function loadUserList() {
             onSnapshot(collection(db, "users"), (snap) => {
                 const list = document.getElementById('userList'); list.innerHTML = "";
-                snap.forEach(uDoc => {
-                    if(uDoc.data().email === auth.currentUser.email) return;
-                    const d = uDoc.data();
-                    list.innerHTML += `<div class="flex justify-between items-center p-2 border-b text-xs">
-                        <span>${d.email} (${d.approved ? '승인' : '대기'})</span>
-                        <button onclick="window.toggleUser('${uDoc.id}', ${d.approved})" class="bg-slate-200 px-2 py-1 rounded">변경</button>
-                    </div>`;
-                });
+                snap.forEach(uDoc => { if(uDoc.data().email !== auth.currentUser.email) list.innerHTML += `<div class="flex justify-between p-2 border-b text-xs"><span>${uDoc.data().email}</span><button onclick="window.toggleUser('${uDoc.id}', ${uDoc.data().approved})" class="bg-slate-200 px-2 py-1 rounded">변경</button></div>`; });
             });
         }
-        window.toggleUser = (id, current) => updateDoc(doc(db, 'users', id), { approved: !current });
+        window.toggleUser = (id, cur) => updateDoc(doc(db, 'users', id), { approved: !cur });
     </script>
 </body>
 </html>
