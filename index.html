@@ -9,8 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         #bookingSection, #adminPanel, #userInfo { display: none; }
-        /* 30분 단위 입력을 위한 스텝 설정 */
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+        .admin-badge { background: linear-gradient(135deg, #f59e0b, #d97706); }
     </style>
 </head>
 <body class="min-h-screen py-10">
@@ -31,6 +30,7 @@
                     </div>
                 </div>
             </div>
+
             <div id="userInfo" class="flex items-center justify-between">
                 <div>
                     <div id="userBadgeArea" class="mb-1 flex gap-1"></div>
@@ -42,7 +42,7 @@
 
         <section id="bookingSection" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6 border-l-4 border-l-blue-500">
             <h2 class="text-lg font-semibold mb-2 text-slate-700">📅 새 예약 만들기</h2>
-            <p class="text-[11px] text-blue-500 mb-4 font-medium">* 30분 단위 선택 가능 / 앞뒤 2시간 간격 자동 체크</p>
+            <p class="text-[11px] text-blue-500 mb-4 font-medium">* 30분 단위만 가능 / 앞뒤 2시간 간격 필수</p>
             <div class="space-y-4">
                 <select id="roomName" class="w-full px-4 py-2 rounded-lg border border-slate-300 outline-none">
                     <option value="밴드실">🎸 밴드실</option>
@@ -51,7 +51,7 @@
                     <option value="강의실">📖 강의실</option>
                     <option value="다목적실">✨ 다목적실</option>
                 </select>
-                <input type="datetime-local" id="bookTime" step="1800" class="w-full px-4 py-2 rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="datetime-local" id="bookTime" step="1800" class="w-full px-4 py-2 rounded-lg border border-slate-300 outline-none">
                 <button id="btnSave" class="w-full bg-slate-800 text-white font-bold py-3 rounded-lg hover:bg-black transition shadow-lg">예약 확정</button>
             </div>
         </section>
@@ -85,6 +85,9 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+
         onAuthStateChanged(auth, (user) => {
             const authForm = document.getElementById('authForm'), userInfo = document.getElementById('userInfo');
             const bookingSection = document.getElementById('bookingSection'), adminPanel = document.getElementById('adminPanel');
@@ -115,31 +118,37 @@
             }
         });
 
-        // 예약 저장 (2시간 중복 체크 로직)
+        // 예약 저장 (v2.4 강제 검증 로직 포함)
         document.getElementById('btnSave').onclick = async () => {
             const room = document.getElementById('roomName').value;
             const timeStr = document.getElementById('bookTime').value;
             if(!timeStr) return alert("예약 시간을 선택해 주세요!");
 
-            const selectedTime = new Date(timeStr).getTime();
+            const dateObj = new Date(timeStr);
+            const minutes = dateObj.getMinutes();
+
+            // 1. 30분 단위 강제 검사
+            if (minutes !== 0 && minutes !== 30) {
+                return alert("❌ 예약은 30분 단위(예: 14:00, 14:30)로만 가능합니다!");
+            }
+
+            const selectedTime = dateObj.getTime();
             const TWO_HOURS = 2 * 60 * 60 * 1000;
 
             try {
-                // 해당 방의 모든 예약을 가져와서 시간 비교
                 const q = query(collection(db, "reservations"), where("room", "==", room));
                 const querySnapshot = await getDocs(q);
                 
                 let isConflict = false;
                 querySnapshot.forEach((doc) => {
                     const existingTime = new Date(doc.data().time).getTime();
-                    // 선택한 시간과 기존 시간의 차이가 2시간(7,200,000ms) 미만이면 중복 처리
                     if (Math.abs(selectedTime - existingTime) < TWO_HOURS) {
                         isConflict = true;
                     }
                 });
 
                 if (isConflict) {
-                    return alert("❌ 이미 예약된 시간과 너무 가깝습니다 (2시간 간격 필요). 다른 시간을 선택해 주세요.");
+                    return alert("❌ 이미 예약된 시간과 너무 가깝습니다 (앞뒤 2시간 간격 필요).");
                 }
 
                 await addDoc(collection(db, "reservations"), {
@@ -152,11 +161,12 @@
             } catch (e) { alert("예약 에러: " + e.message); }
         };
 
-        // 현황/로그인/회원가입/로그아웃 로직 (동일)
+        // 기타 기능
         document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value).catch(e => alert("로그인 실패"));
         document.getElementById('btnSignup').onclick = async () => {
             const userCred = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
             await setDoc(doc(db, "users", userCred.user.uid), { email: emailInput.value, approved: false, isAdmin: false });
+            alert("가입 완료!");
         };
         document.getElementById('btnLogout').onclick = () => signOut(auth);
 
@@ -167,7 +177,7 @@
                 const item = doc.data();
                 list.innerHTML += `<div class="p-3 bg-white rounded-xl border mb-2 shadow-sm border-l-4 border-l-slate-300">
                     <p class="font-bold text-sm text-slate-800">${item.room}</p>
-                    <p class="text-[10px] text-slate-500">⏰ ${item.time.replace('T',' ')} / ${item.user.split('@')[0]}님</p>
+                    <p class="text-[10px] text-slate-500 mt-1">⏰ ${item.time.replace('T',' ')} / ${item.user.split('@')[0]}님</p>
                 </div>`;
             });
         });
@@ -178,10 +188,15 @@
                 list.innerHTML = "";
                 snap.forEach(uDoc => {
                     if(uDoc.data().email === auth.currentUser.email) return;
-                    list.innerHTML += `<div class="flex justify-between items-center p-2 border-b text-xs">
-                        <span>${uDoc.data().email}</span>
-                        <button onclick="updateDoc(doc(db, 'users', '${uDoc.id}'), {approved: ${!uDoc.data().approved}})" class="bg-slate-200 px-2 py-1 rounded">승인/취소</button>
-                    </div>`;
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center p-2 border-b text-xs";
+                    div.innerHTML = `<span>${uDoc.data().email}</span>`;
+                    const btn = document.createElement('button');
+                    btn.className = "bg-slate-200 px-2 py-1 rounded font-bold";
+                    btn.textContent = uDoc.data().approved ? '취소' : '승인';
+                    btn.onclick = () => updateDoc(doc(db, 'users', uDoc.id), { approved: !uDoc.data().approved });
+                    div.appendChild(btn);
+                    list.appendChild(div);
                 });
             });
         }
