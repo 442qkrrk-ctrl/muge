@@ -16,42 +16,40 @@
         /* [공통] 캘린더 기본 스타일 */
         .fc { background: white; padding: 5px; border-radius: 1.25rem; border: 1px solid #e2e8f0; height: auto !important; min-height: 550px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         
-        /* [모바일 기준] 시간 축(오전/오후) 글자 크기 축소 */
+        /* [모바일] 시간 축(오전/오후) 글자 크기 축소 */
         .fc .fc-timegrid-slot-label-cushion, 
-        .fc .fc-list-event-time,
         .fc-timegrid-axis-cushion {
-            font-size: 0.7rem; font-weight: 500; color: #64748b; 
+            font-size: 0.7rem !important; font-weight: 500; color: #64748b; 
         }
 
-        /* [PC 반응형] 화면이 넓어지면(768px 이상) 2배 가까이 확대 */
+        /* [PC 반응형] 768px 이상 확대 로직 */
         @media (min-width: 768px) {
             .max-w-md { max-width: 1100px !important; }
-            .fc-toolbar-title { font-size: 2.2rem !important; } /* 타이틀 대폭 확대 */
-            .fc .fc-timegrid-slot-label-cushion { font-size: 1rem !important; } /* 시간 축 확대 */
+            .fc-toolbar-title { font-size: 2.2rem !important; }
+            .fc .fc-timegrid-slot-label-cushion { font-size: 1rem !important; }
             .month-time { font-size: 11px !important; }
             .month-room { font-size: 14px !important; }
             .input-row > * { font-size: 16px !important; padding: 15px !important; }
             #btnSave { font-size: 18px !important; padding: 20px !important; }
             .fc-col-header-cell-cushion { font-size: 1rem !important; }
+            .fc .fc-button { font-size: 1rem !important; padding: 8px 16px !important; }
         }
 
-        /* [모바일 타이틀 크기] */
+        /* [모바일 타이틀] */
         .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 800; color: #065f46; }
 
-        /* [월 보기] 시간/장소 두 줄 배치 및 검정색 */
+        /* [월 보기] 시간/장소 두 줄 배치 */
         .month-event-box { display: flex; flex-direction: column; width: 100%; padding: 2px 1px; line-height: 1.1; }
-        .month-time { font-size: 8px; color: #000000 !important; font-weight: 900; opacity: 0.7; margin-bottom: 1px; }
-        .month-room { font-size: 10px; font-weight: 800; color: #000000 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .month-time { font-size: 8px; color: #000 !important; font-weight: 900; opacity: 0.7; }
+        .month-room { font-size: 10px; font-weight: 800; color: #000 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* [예약바 한 줄 배치] */
+        /* [예약바] 한 줄 배치 */
         .input-row { display: flex; gap: 4px; align-items: center; }
         .input-row > * { flex: 1; min-width: 0; font-size: 13px !important; padding: 10px 4px !important; border-radius: 8px !important; border: 1px solid #e2e8f0; outline: none; }
         
-        /* 요일 및 날짜 숫자 크기 */
-        .fc-col-header-cell-cushion { font-size: 0.75rem; }
-        .fc-daygrid-day-number { font-size: 0.75rem !important; padding: 4px !important; }
-
-        button:active { scale: 0.96; transition: 0.1s; }
+        /* 버튼 컬러 커스텀 */
+        .fc-button-primary { background-color: #065f46 !important; border-color: #065f46 !important; }
+        button:active { scale: 0.96; }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -76,7 +74,7 @@
             </div>
         </section>
 
-        <section id="bookingSection" class="bg-white p-4 md:p-8 rounded-2xl shadow-md border-l-4 md:border-l-8 border-l-emerald-500 mb-4 transition-all">
+        <section id="bookingSection" class="bg-white p-4 md:p-8 rounded-2xl shadow-md border-l-4 md:border-l-8 border-l-emerald-500 mb-4">
             <div class="input-row mb-3 md:mb-5">
                 <select id="roomName" class="border bg-emerald-50 font-bold outline-none">
                     <option value="밴드실">🎸 밴드실</option>
@@ -92,10 +90,6 @@
         </section>
 
         <div id="calendar"></div>
-
-        <section id="adminPanel" class="mt-4 bg-orange-50 p-4 rounded-xl border border-orange-100 hidden">
-            <div id="userList" class="space-y-1"></div>
-        </section>
     </div>
 
     <script type="module">
@@ -103,7 +97,6 @@
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 본인의 Firebase Config 정보를 입력하세요
         const firebaseConfig = {
             apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8",
             authDomain: "muge-43e73.firebaseapp.com",
@@ -117,19 +110,18 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 시간 생성
         const timeSelect = document.getElementById('bookTimeSelect');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
                 const hh = String(h).padStart(2, '0');
-                const opt = new Option(`${hh}:${m}`, `${hh}:${m}`);
-                timeSelect.add(opt);
+                timeSelect.add(new Option(`${hh}:${m}`, `${hh}:${m}`));
             });
         }
 
         let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko',
+            buttonText: { today: '오늘', month: '월', week: '주' },
             slotMinTime: '09:00:00',
             slotMaxTime: '22:00:00',
             slotLabelFormat: { hour: 'numeric', minute: '2-digit', omitZeroMinute: false, meridian: 'narrow' },
