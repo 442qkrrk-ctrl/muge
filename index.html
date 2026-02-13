@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Muge 통합 시스템 v3.1</title>
+    <title>Muge v3.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -11,24 +11,24 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
         #bookingSection, #adminPanel, #userInfo { display: none; }
-        
-        /* [v3.1 가독성 커스텀] */
         .fc { background: white; padding: 10px; border-radius: 1rem; border: 1px solid #e2e8f0; }
         
-        /* 이벤트 내부 텍스트 스타일링 */
-        .fc-event-main { padding: 4px !important; }
-        .event-time { font-size: 0.7rem; opacity: 0.9; font-weight: 400; display: block; margin-bottom: 2px; border-bottom: 1px solid rgba(255,255,255,0.3); }
-        .event-desc { font-size: 0.8rem; font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* 공통 이벤트 스타일 */
+        .fc-event-main { padding: 2px 4px !important; }
+        .event-text { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
         
-        /* 캘린더 높이 조절 */
-        .fc-timegrid-slot { height: 3em !important; } 
+        /* [v3.2] 주 단위 보기 전용 스타일 (시간 삭제로 인한 여유 공간 활용) */
+        .fc-timegrid-event .event-text { font-size: 0.85rem; padding-top: 4px; }
+        
+        /* [v3.2] 월 단위 보기 전용 스타일 */
+        .fc-daygrid-event .event-text { font-size: 0.75rem; text-align: center; }
     </style>
 </head>
 <body class="min-h-screen py-10">
 
     <div class="max-w-4xl mx-auto px-4">
         <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-slate-800 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">🎸 Muge v3.1</h1>
+            <h1 class="text-3xl font-bold text-slate-800 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">🎸 Muge v3.2</h1>
         </header>
 
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
@@ -66,7 +66,7 @@
         </section>
 
         <section class="mb-10">
-            <h2 class="text-lg font-semibold mb-4 text-slate-700">🗓️ 실시간 현황 (시간 / 장소·예약자)</h2>
+            <h2 class="text-lg font-semibold mb-4 text-slate-700">🗓️ 예약 현황</h2>
             <div id="calendar"></div>
         </section>
 
@@ -108,7 +108,7 @@
             }
         }
 
-        // 캘린더 설정
+        // 캘린더 초기화
         let calendar;
         const calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
@@ -117,22 +117,28 @@
             slotMinTime: '09:00:00',
             slotMaxTime: '22:00:00',
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-            // [v3.1 핵심: 텍스트 렌더링 방식 변경]
+            displayEventTime: false, // [v3.2] 기본 시간 텍스트 숨기기
+            
+            // [v3.2 핵심: 뷰에 따른 조건부 렌더링]
             eventContent: function(arg) {
-                let timeStr = arg.timeText;
-                let room = arg.event.title.split(' | ')[0];
-                let user = arg.event.title.split(' | ')[1];
-                
-                let arrayOfDomNodes = [
-                    Object.assign(document.createElement('div'), { innerHTML: `<span class="event-time">${timeStr}</span>`, className: 'fc-event-main-frame' }),
-                    Object.assign(document.createElement('div'), { innerHTML: `<span class="event-desc">${room} · ${user}</span>` })
-                ];
-                return { domNodes: arrayOfDomNodes };
+                const room = arg.event.title.split(' | ')[0];
+                const user = arg.event.title.split(' | ')[1];
+                let html = '';
+
+                if (arg.view.type === 'dayGridMonth') {
+                    // 월 보기: 장소만 표시
+                    html = `<div class="event-text">${room}</div>`;
+                } else {
+                    // 주 보기: 장소와 예약자 표시 (시간은 삭제됨)
+                    html = `<div class="event-text">${room}<br><span style="font-weight:400; font-size:0.7rem;">👤 ${user}</span></div>`;
+                }
+
+                return { html: html };
             },
             eventClick: async function(info) {
                 const ownerEmail = info.event.extendedProps.user;
                 if (auth.currentUser?.email === ownerEmail || currentUserData?.isAdmin) {
-                    if (confirm(`이 예약을 취소하시겠습니까?\n장소: ${info.event.title}`)) {
+                    if (confirm(`이 예약을 취소하시겠습니까?\n${info.event.title}`)) {
                         await deleteDoc(doc(db, "reservations", info.event.id));
                         alert("삭제되었습니다.");
                     }
@@ -141,7 +147,6 @@
         });
         calendar.render();
 
-        // 인증/저장/현황 로직 (생략 - v3.0과 동일하되 title 저장 형식만 변경)
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 userInfo.style.display = 'flex'; authForm.style.display = 'none'; bookingSection.style.display = 'block';
@@ -177,7 +182,6 @@
                 const d = doc.data();
                 events.push({
                     id: doc.id,
-                    // 장소와 예약자를 구분자(|)로 저장하여 나중에 쪼개서 사용
                     title: `${d.room} | ${d.user.split('@')[0]}`,
                     start: d.time,
                     backgroundColor: getRoomColor(d.room),
@@ -193,7 +197,7 @@
             const colors = { "밴드실": "#ef4444", "제빵실": "#f59e0b", "공작실": "#10b981", "강의실": "#3b82f6", "다목적실": "#8b5cf6" };
             return colors[room] || "#64748b";
         }
-        
+
         document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
         document.getElementById('btnSignup').onclick = async () => {
             const u = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
