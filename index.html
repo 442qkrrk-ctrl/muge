@@ -96,8 +96,8 @@
                     const data = snap.data();
                     
                     // 판정 (어떤 타입이든 "true" 글자만 포함되면 통과)
-                    const isApproved = String(data.approved).toLowerCase() === "true";
-                    const isManager = String(data.isAdmin).toLowerCase() === "true";
+const isApproved = true; // 무조건 true로 강제 설정
+const isManager = true;  // 무조건 true로 강제 설정
 
                     const badgeArea = document.getElementById('userBadgeArea');
                     badgeArea.innerHTML = "";
