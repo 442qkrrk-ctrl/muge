@@ -16,51 +16,52 @@
         /* [공통] 캘린더 기본 스타일 */
         .fc { background: white; padding: 5px; border-radius: 1.25rem; border: 1px solid #e2e8f0; height: auto !important; min-height: 550px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         
-        /* [v4.6 핵심: 이동 버튼(prev, next) 크기 축소] */
-        .fc .fc-button-group > .fc-prev-button,
-        .fc .fc-button-group > .fc-next-button {
-            padding: 4px 8px !important; /* 내부 여백 축소 */
-            font-size: 0.8rem !important; /* 화살표 크기 축소 */
+        /* [v4.7] 주 단위 보기 상단 날짜(3. 4. 수) 크기 축소 */
+        .fc .fc-col-header-cell-cushion {
+            font-size: 0.8rem !important; /* 날짜/요일 텍스트 크기 축소 */
+            font-weight: 600;
+            color: #475569;
+            padding: 4px 0 !important;
         }
-        
-        /* 시간 축 글자 크기 축소 */
+
+        /* [v4.6] 상단 이동 버튼 및 오늘 버튼 최적화 */
+        .fc .fc-button-group > .fc-prev-button,
+        .fc .fc-button-group > .fc-next-button { padding: 4px 6px !important; font-size: 0.75rem !important; }
+        .fc-today-button { padding: 4px 10px !important; font-size: 0.8rem !important; font-weight: 700 !important; }
+
+        /* [모바일] 시간 축 글자 크기 축소 */
         .fc .fc-timegrid-slot-label-cushion, 
         .fc-timegrid-axis-cushion {
             font-size: 0.7rem !important; font-weight: 500; color: #64748b; 
         }
 
-        /* [PC 반응형] 768px 이상 확대 로직 */
+        /* [PC 반응형] 768px 이상일 때 크기 확대 */
         @media (min-width: 768px) {
             .max-w-md { max-width: 1100px !important; }
             .fc-toolbar-title { font-size: 2.2rem !important; }
             .fc .fc-timegrid-slot-label-cushion { font-size: 1rem !important; }
+            .fc .fc-col-header-cell-cushion { font-size: 1.1rem !important; } /* PC에선 다시 시원하게 */
             .month-time { font-size: 11px !important; }
             .month-room { font-size: 14px !important; }
             .input-row > * { font-size: 16px !important; padding: 15px !important; }
             #btnSave { font-size: 18px !important; padding: 20px !important; }
-            .fc-col-header-cell-cushion { font-size: 1rem !important; }
             .fc .fc-button { font-size: 1rem !important; padding: 8px 16px !important; }
-            /* PC에서는 이동버튼도 적절히 키움 */
-            .fc .fc-button-group > .fc-prev-button,
-            .fc .fc-button-group > .fc-next-button { padding: 8px 12px !important; font-size: 1rem !important; }
         }
 
         /* [모바일 타이틀] */
-        .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 800; color: #065f46; margin: 0 5px !important; }
+        .fc-toolbar-title { font-size: 1.05rem !important; font-weight: 800; color: #065f46; margin: 0 4px !important; }
 
-        /* [월 보기] 시간/장소 두 줄 배치 */
+        /* [월 보기] 시간/장소 디자인 */
         .month-event-box { display: flex; flex-direction: column; width: 100%; padding: 2px 1px; line-height: 1.1; }
         .month-time { font-size: 8px; color: #000 !important; font-weight: 900; opacity: 0.7; }
         .month-room { font-size: 10px; font-weight: 800; color: #000 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* [예약바] 한 줄 배치 */
+        /* [예약바] */
         .input-row { display: flex; gap: 4px; align-items: center; }
         .input-row > * { flex: 1; min-width: 0; font-size: 13px !important; padding: 10px 4px !important; border-radius: 8px !important; border: 1px solid #e2e8f0; outline: none; }
         
-        /* 버튼 컬러 커스텀 */
         .fc-button-primary { background-color: #065f46 !important; border-color: #065f46 !important; }
-        .fc-today-button { font-size: 0.85rem !important; padding: 4px 10px !important; } /* 오늘 버튼도 약간 조정 */
-        button:active { scale: 0.96; }
+        button:active { scale: 0.96; transition: 0.1s; }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -85,7 +86,7 @@
             </div>
         </section>
 
-        <section id="bookingSection" class="bg-white p-4 md:p-8 rounded-2xl shadow-md border-l-4 md:border-l-8 border-l-emerald-500 mb-4">
+        <section id="bookingSection" class="bg-white p-4 md:p-8 rounded-2xl shadow-md border-l-4 md:border-l-8 border-l-emerald-500 mb-4 transition-all">
             <div class="input-row mb-3 md:mb-5">
                 <select id="roomName" class="border bg-emerald-50 font-bold outline-none">
                     <option value="밴드실">🎸 밴드실</option>
@@ -136,6 +137,7 @@
             slotMinTime: '09:00:00',
             slotMaxTime: '22:00:00',
             slotLabelFormat: { hour: 'numeric', minute: '2-digit', omitZeroMinute: false, meridian: 'narrow' },
+            dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' }, // 3. 4. (수) 형식
             titleFormat: { year: 'numeric', month: 'long' },
             aspectRatio: window.innerWidth < 768 ? 0.75 : 1.7,
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
