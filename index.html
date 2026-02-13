@@ -11,81 +11,77 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #fdfbf7; color: #1e293b; -webkit-tap-highlight-color: transparent; }
         
-        /* [레이아웃 설정] */
         #bookingSection, #adminPanel, #userInfo { display: none; }
         .fc { background: white; padding: 5px; border-radius: 1.25rem; border: 1px solid #e2e8f0; height: auto !important; min-height: 550px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         
-        /* [월 보기 - 텍스트 블랙 & 클린] */
-        .month-event-box { display: flex; align-items: center; width: 100%; padding: 1px 2px; }
+        /* [v4.0 월 보기 - 시간/장소 두 줄 배치] */
+        .month-event-box { 
+            display: flex; flex-direction: column; /* 두 줄 배치 핵심 */
+            width: 100%; padding: 2px 1px; line-height: 1.1;
+        }
         .month-time { 
-            font-size: 8px; background: rgba(255, 255, 255, 0.8); color: #000 !important;
-            padding: 0 3px; border-radius: 3px; font-weight: 900; margin-right: 4px; flex-shrink: 0;
-            border: 0.5px solid rgba(0,0,0,0.1);
+            font-size: 8px; color: #000000 !important; font-weight: 900;
+            margin-bottom: 1px; opacity: 0.7;
         }
         .month-room { 
-            font-size: 10px; font-weight: 700; color: #000 !important;
+            font-size: 10px; font-weight: 800; color: #000000 !important;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
-        /* [주 보기 - 모바일 최적화] */
-        .week-event-box { padding: 5px 4px; line-height: 1.2; }
-        .week-room { font-size: 0.75rem; font-weight: 800; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
-        .week-user { font-size: 0.65rem; color: rgba(255,255,255,0.95); }
+        /* [입력창 한 줄 배치 커스텀] */
+        .input-row { display: flex; gap: 4px; align-items: center; }
+        .input-row > * { flex: 1; min-width: 0; font-size: 12px !important; padding: 8px 4px !important; border-radius: 8px !important; }
+        @media (min-width: 768px) {
+            .input-row { gap: 8px; }
+            .input-row > * { font-size: 14px !important; padding: 12px 16px !important; border-radius: 12px !important; }
+        }
 
-        /* 입력창 스타일 */
-        input, select, button { font-size: 16px !important; }
-        .btn-primary { background-color: #059669; color: white; transition: all 0.2s; } /* 마을학교 느낌의 초록색 */
-        .btn-primary:hover { background-color: #047857; }
+        /* 캘린더 이벤트 배경 투명도 (검은 글씨 강조) */
+        .fc-daygrid-event { border: none !important; background-color: rgba(0,0,0,0.05); margin: 1px 2px !important; }
     </style>
 </head>
 <body class="min-h-screen pb-12">
 
-    <div class="max-w-md md:max-w-4xl mx-auto px-4 pt-8">
-        <header class="flex justify-between items-end mb-6">
-            <div>
-                <h1 class="text-2xl md:text-3xl font-black text-emerald-700 tracking-tight">무계행복마을학교</h1>
-                <p class="text-[10px] md:text-xs text-emerald-600 font-bold opacity-80 uppercase tracking-widest">Happy Village School System</p>
-            </div>
-            <div id="userInfo" class="flex flex-col items-end gap-1">
-                <span id="userDisplay" class="text-[10px] font-bold bg-white px-3 py-1 rounded-full border shadow-sm text-slate-500"></span>
-                <button id="btnLogout" class="text-[10px] text-red-400 font-bold hover:text-red-600">로그아웃</button>
+    <div class="max-w-md md:max-w-4xl mx-auto px-3 pt-6">
+        <header class="flex justify-between items-center mb-4 px-1">
+            <h1 class="text-xl md:text-2xl font-black text-emerald-700">무계행복마을학교</h1>
+            <div id="userInfo" class="text-right">
+                <span id="userDisplay" class="text-[9px] font-bold block text-slate-400"></span>
+                <button id="btnLogout" class="text-[9px] text-red-400 font-bold">로그아웃</button>
             </div>
         </header>
 
-        <section id="authForm" class="bg-white p-6 rounded-3xl shadow-xl border border-emerald-50 mb-6">
-            <div class="space-y-3 mb-5">
-                <input type="email" id="emailInput" placeholder="이메일 주소" class="w-full px-5 py-4 rounded-2xl border-slate-100 border bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500/20">
-                <input type="password" id="passwordInput" placeholder="비밀번호" class="w-full px-5 py-4 rounded-2xl border-slate-100 border bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500/20">
+        <section id="authForm" class="bg-white p-5 rounded-2xl shadow-sm border mb-4">
+            <div class="flex gap-2 mb-2">
+                <input type="email" id="emailInput" placeholder="이메일" class="flex-1 px-3 py-2 rounded-lg border text-sm outline-none">
+                <input type="password" id="passwordInput" placeholder="비번" class="flex-1 px-3 py-2 rounded-lg border text-sm outline-none">
             </div>
-            <div class="flex gap-3">
-                <button id="btnLogin" class="flex-[2] btn-primary font-bold py-4 rounded-2xl shadow-lg shadow-emerald-100 active:scale-95">로그인</button>
-                <button id="btnSignup" class="flex-1 bg-slate-100 text-slate-500 font-bold py-4 rounded-2xl active:scale-95">회원가입</button>
+            <div class="flex gap-2">
+                <button id="btnLogin" class="flex-1 bg-emerald-600 text-white font-bold py-2 rounded-lg text-sm">로그인</button>
+                <button id="btnSignup" class="flex-1 bg-slate-100 text-slate-500 py-2 rounded-lg text-sm">가입</button>
             </div>
         </section>
 
-        <section id="bookingSection" class="bg-white p-6 rounded-3xl shadow-md border-l-8 border-l-emerald-500 mb-6">
-            <h2 class="text-xs font-black text-slate-400 mb-4 tracking-widest">FACILITY RESERVATION</h2>
-            <div class="flex flex-col gap-3 mb-4">
-                <select id="roomName" class="w-full px-5 py-4 rounded-2xl border bg-emerald-50/50 font-bold outline-none text-emerald-900">
+        <section id="bookingSection" class="bg-white p-4 rounded-2xl shadow-md border-l-4 border-l-emerald-500 mb-4">
+            <div class="input-row mb-3">
+                <select id="roomName" class="border bg-emerald-50 font-bold outline-none">
                     <option value="밴드실">🎸 밴드실</option>
                     <option value="제빵실">🍞 제빵실</option>
                     <option value="공작실">🔨 공작실</option>
                     <option value="강의실">📖 강의실</option>
                     <option value="다목적실">✨ 다목적실</option>
                 </select>
-                <div class="flex gap-2">
-                    <input type="date" id="bookDate" class="flex-[1.5] px-5 py-4 rounded-2xl border outline-none">
-                    <select id="bookTimeSelect" class="flex-1 px-5 py-4 rounded-2xl border outline-none"></select>
-                </div>
+                <input type="date" id="bookDate" class="border outline-none">
+                <select id="bookTimeSelect" class="border outline-none"></select>
             </div>
-            <button id="btnSave" class="w-full bg-slate-800 text-white font-black py-5 rounded-2xl active:scale-95 shadow-xl transition-all">공간 예약 확정하기</button>
+            <button id="btnSave" class="w-full bg-slate-800 text-white font-black py-3 rounded-xl text-sm active:scale-95 transition-all">예약 확정</button>
         </section>
 
-        <div id="calendar" class="mb-8"></div>
+        <div id="calendar"></div>
 
-        <section id="adminPanel" class="bg-orange-50/50 p-6 rounded-3xl border border-orange-100 shadow-inner">
-            <h2 class="text-[10px] font-black text-orange-600 mb-4 tracking-widest">ADMINISTRATION</h2>
-            <div id="userList" class="space-y-2"></div>
+        <section id="adminPanel" class="mt-4 bg-orange-50 p-4 rounded-xl border border-orange-100 shadow-inner">
+            <h2 class="text-[9px] font-black text-orange-600 mb-2">관리자 설정</h2>
+            <div id="userList" class="space-y-1"></div>
         </section>
     </div>
 
@@ -121,27 +117,24 @@
         let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko',
-            handleWindowResize: true,
-            aspectRatio: window.innerWidth < 768 ? 0.85 : 1.5,
-            slotMinTime: '09:00:00',
-            slotMaxTime: '22:00:00',
+            aspectRatio: window.innerWidth < 768 ? 0.75 : 1.5,
             headerToolbar: { left: 'prev,next', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             displayEventTime: false,
-            allDaySlot: false,
             eventContent: function(arg) {
                 const room = arg.event.title.split(' | ')[0];
                 const user = arg.event.title.split(' | ')[1];
                 const timeStr = arg.event.extendedProps.shortTime;
                 if (arg.view.type === 'dayGridMonth') {
+                    // [v4.0 핵심] 시간(첫줄), 장소(둘째줄)
                     return { html: `<div class="month-event-box"><span class="month-time">${timeStr}</span><span class="month-room">${room}</span></div>` };
                 } else {
-                    return { html: `<div class="week-event-box"><span class="week-room">${room}</span><br><span class="week-user">${user}님</span></div>` };
+                    return { html: `<div class="p-1"><b class="text-[10px] block text-white">${room}</b><span class="text-[8px] text-white opacity-80">${user}</span></div>` };
                 }
             },
             eventClick: async function(info) {
                 const owner = info.event.extendedProps.user;
                 if (auth.currentUser?.email === owner || currentUserData?.isAdmin) {
-                    if (confirm(`예약을 취소하시겠습니까?`)) await deleteDoc(doc(db, "reservations", info.event.id));
+                    if (confirm(`삭제하시겠습니까?`)) await deleteDoc(doc(db, "reservations", info.event.id));
                 }
             }
         });
@@ -150,8 +143,8 @@
         onAuthStateChanged(auth, (user) => {
             const ui = { auth: document.getElementById('authForm'), info: document.getElementById('userInfo'), book: document.getElementById('bookingSection'), admin: document.getElementById('adminPanel') };
             if (user) {
-                ui.auth.style.display = 'none'; ui.info.style.display = 'flex'; ui.book.style.display = 'block';
-                document.getElementById('userDisplay').textContent = user.email.split('@')[0] + "님 반가워요!";
+                ui.auth.style.display = 'none'; ui.info.style.display = 'block'; ui.book.style.display = 'block';
+                document.getElementById('userDisplay').textContent = user.email.split('@')[0] + "님";
                 onSnapshot(doc(db, "users", user.uid), (snap) => {
                     if(snap.exists()) {
                         currentUserData = snap.data();
@@ -172,9 +165,9 @@
             const room = document.getElementById('roomName').value;
             const date = document.getElementById('bookDate').value;
             const time = document.getElementById('bookTimeSelect').value;
-            if(!date) return alert("날짜를 선택해주세요.");
+            if(!date) return alert("날짜 선택!");
             await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time: `${date}T${time}`, shortTime: time });
-            alert("예약이 확정되었습니다.");
+            alert("예약 완료");
         };
 
         onSnapshot(collection(db, "reservations"), (snap) => {
