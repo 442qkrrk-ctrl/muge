@@ -14,12 +14,18 @@
         #bookingSection, #adminPanel, #userInfo { display: none; }
         .fc { background: white; padding: 5px; border-radius: 1.25rem; border: 1px solid #e2e8f0; height: auto !important; min-height: 550px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         
-        /* [v4.1 모바일 타이틀 크기 최적화] */
-        .fc-toolbar-title { 
-            font-size: 1.1rem !important; /* 모바일에서 2026년 2월 글씨 크기 */
-            font-weight: 800 !important; 
-            color: #065f46; 
+        /* [v4.3 핵심: 시간 축(오전/오후) 글자 크기 축소] */
+        .fc .fc-timegrid-slot-label-cushion, 
+        .fc .fc-list-event-time,
+        .fc-timegrid-axis-cushion,
+        .fc-timegrid-slot-label {
+            font-size: 0.7rem !important; /* 오전/오후 시간 글씨 크기 */
+            font-weight: 500;
+            color: #64748b; 
         }
+
+        /* [v4.1 모바일 타이틀 크기 최적화] */
+        .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 800; color: #065f46; }
         @media (min-width: 768px) { .fc-toolbar-title { font-size: 1.5rem !important; } }
 
         /* [월 보기 - 시간/장소 두 줄 배치 및 검정색] */
@@ -31,7 +37,10 @@
         .input-row { display: flex; gap: 4px; align-items: center; }
         .input-row > * { flex: 1; min-width: 0; font-size: 13px !important; padding: 10px 4px !important; border-radius: 8px !important; border: 1px solid #e2e8f0; outline: none; }
         
-        /* 버튼 터치 피드백 */
+        /* 요일 및 날짜 숫자 크기 조정 */
+        .fc-col-header-cell-cushion { font-size: 0.75rem; }
+        .fc-daygrid-day-number { font-size: 0.75rem !important; padding: 4px !important; }
+
         button:active { scale: 0.96; transition: 0.1s; }
     </style>
 </head>
@@ -75,7 +84,6 @@
         <div id="calendar"></div>
 
         <section id="adminPanel" class="mt-4 bg-orange-50 p-4 rounded-xl border border-orange-100 hidden">
-            <h2 class="text-[9px] font-black text-orange-600 mb-2">관리자 설정</h2>
             <div id="userList" class="space-y-1"></div>
         </section>
     </div>
@@ -83,9 +91,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, query, addDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // 본인의 Firebase 설정을 여기에 붙여넣으세요
         const firebaseConfig = {
             apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8",
             authDomain: "muge-43e73.firebaseapp.com",
@@ -98,27 +105,29 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        let currentUserData = null;
 
+        // 시간 옵션 생성
         const timeSelect = document.getElementById('bookTimeSelect');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
                 const hh = String(h).padStart(2, '0');
-                const opt = document.createElement('option');
-                opt.value = `${hh}:${m}`; opt.textContent = `${hh}:${m}`;
-                timeSelect.appendChild(opt);
+                const opt = new Option(`${hh}:${m}`, `${hh}:${m}`);
+                timeSelect.add(opt);
             });
         }
 
         let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko',
+            slotMinTime: '09:00:00',
+            slotMaxTime: '22:00:00',
+            slotLabelFormat: { hour: 'numeric', minute: '2-digit', omitZeroMinute: false, meridian: 'narrow' },
             titleFormat: { year: 'numeric', month: 'long' },
             aspectRatio: window.innerWidth < 768 ? 0.75 : 1.5,
             headerToolbar: { left: 'prev,next', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             displayEventTime: false,
             eventContent: function(arg) {
-                const room = arg.event.title.split(' | ')[0];
+                const room = arg.event.title;
                 const timeStr = arg.event.extendedProps.shortTime;
                 if (arg.view.type === 'dayGridMonth') {
                     return { html: `<div class="month-event-box"><span class="month-time">${timeStr}</span><span class="month-room">${room}</span></div>` };
@@ -137,19 +146,13 @@
             if (user) {
                 ui.auth.style.display = 'none'; ui.info.style.display = 'block'; ui.book.style.display = 'block';
                 document.getElementById('userDisplay').textContent = user.email.split('@')[0] + "님";
-                onSnapshot(doc(db, "users", user.uid), (snap) => {
-                    if(snap.exists()) {
-                        currentUserData = snap.data();
-                        if(currentUserData.isAdmin) ui.admin.style.display = 'block';
-                    }
-                });
-            } else { ui.auth.style.display = 'block'; ui.info.style.display = 'none'; ui.book.style.display = 'none'; ui.admin.style.display = 'none'; }
+            } else { ui.auth.style.display = 'block'; ui.info.style.display = 'none'; ui.book.style.display = 'none'; }
         });
 
         document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value).catch(e => alert(e.message));
         document.getElementById('btnSignup').onclick = async () => {
             const u = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-            await setDoc(doc(db, "users", u.user.uid), { email: emailInput.value, approved: false, isAdmin: false });
+            await setDoc(doc(db, "users", u.user.uid), { email: emailInput.value, isAdmin: false });
         };
         document.getElementById('btnLogout').onclick = () => signOut(auth);
 
