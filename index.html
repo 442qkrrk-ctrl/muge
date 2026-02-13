@@ -3,69 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Muge v3.5</title>
+    <title>Muge v3.6 - Smart Reservation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
         #bookingSection, #adminPanel, #userInfo { display: none; }
         
-        /* 캘린더 커스텀 */
-        .fc { background: white; padding: 12px; border-radius: 1.25rem; border: 1px solid #e2e8f0; height: 80vh; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        /* [캘린더 기본 스타일] */
+        .fc { background: white; padding: 12px; border-radius: 1.25rem; border: 1px solid #e2e8f0; height: 80vh; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
         .fc-header-toolbar { scale: 0.9; }
 
-        /* [v3.5 핵심] 월 보기(DayGrid) 전용 텍스트 스타일 */
+        /* [월 보기 - 장소 글씨 가독성 강화] */
         .month-event-box { 
-            display: flex; 
-            align-items: center; 
-            width: 100%;
-            padding: 1px 0;
-            overflow: hidden;
+            display: flex; align-items: center; width: 100%; padding: 2px 4px; min-height: 22px; 
         }
         .month-time { 
-            font-size: 10px; 
-            background: rgba(0, 0, 0, 0.15); 
-            color: white;
-            padding: 0 4px; 
-            border-radius: 3px; 
-            font-weight: 600;
-            margin-right: 5px;
-            flex-shrink: 0; /* 시간 영역 고정 */
+            font-size: 9px; background: rgba(0, 0, 0, 0.25); color: #ffffff !important;
+            padding: 1px 4px; border-radius: 4px; font-weight: 600; margin-right: 6px; flex-shrink: 0;
         }
         .month-room { 
-            font-size: 11px; 
-            font-weight: 700; 
-            color: white;
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
+            font-size: 11px; font-weight: 800; color: #ffffff !important; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-shadow: 0px 1px 2px rgba(0,0,0,0.4); /* 글자 가독성 핵심 */
         }
 
-        /* [v3.5 핵심] 주 보기(TimeGrid) 전용 스타일 */
-        .week-event-box { padding: 4px; }
+        /* [주 보기 - 텍스트 정렬] */
+        .week-event-box { padding: 4px; line-height: 1.3; }
         .week-room { font-size: 0.85rem; font-weight: 800; display: block; color: white; margin-bottom: 2px; }
-        .week-user { font-size: 0.75rem; font-weight: 400; color: rgba(255, 255, 255, 0.95); }
+        .week-user { font-size: 0.75rem; font-weight: 400; color: rgba(255, 255, 255, 0.9); }
 
-        .fc-event { border: none !important; margin: 1px 2px !important; }
+        .fc-event { border: none !important; cursor: pointer; transition: transform 0.1s; }
+        .fc-event:hover { transform: scale(1.02); }
     </style>
 </head>
 <body class="min-h-screen py-8">
 
     <div class="max-w-4xl mx-auto px-4">
         <header class="flex justify-between items-center mb-6 px-2">
-            <h1 class="text-3xl font-black text-blue-600 tracking-tighter">Muge v3.5</h1>
+            <h1 class="text-3xl font-black text-blue-600 tracking-tighter">Muge v3.6</h1>
             <div id="userInfo" class="flex items-center gap-4 bg-white px-4 py-2 rounded-full shadow-sm border border-slate-100">
                 <span id="userDisplay" class="text-xs font-bold text-slate-600"></span>
-                <button id="btnLogout" class="text-xs text-red-500 font-bold">Logout</button>
+                <button id="btnLogout" class="text-xs text-red-500 font-bold hover:underline">로그아웃</button>
             </div>
         </header>
 
         <section id="authForm" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                <input type="email" id="emailInput" placeholder="Email" class="w-full px-4 py-3 rounded-xl border-slate-200 border outline-none focus:ring-2 focus:ring-blue-500/20 transition">
-                <input type="password" id="passwordInput" placeholder="Password" class="w-full px-4 py-3 rounded-xl border-slate-200 border outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                <input type="email" id="emailInput" placeholder="이메일 (example@test.com)" class="w-full px-4 py-3 rounded-xl border-slate-200 border outline-none focus:ring-2 focus:ring-blue-500/20 transition">
+                <input type="password" id="passwordInput" placeholder="비밀번호 (6자리 이상)" class="w-full px-4 py-3 rounded-xl border-slate-200 border outline-none focus:ring-2 focus:ring-blue-500/20 transition">
             </div>
             <div class="flex gap-2">
                 <button id="btnLogin" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition shadow-md shadow-blue-200">로그인</button>
@@ -74,7 +62,6 @@
         </section>
 
         <section id="bookingSection" class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-l-blue-600 mb-6">
-            <h2 class="text-sm font-bold text-slate-400 mb-4 uppercase tracking-widest">Make a Reservation</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                 <select id="roomName" class="px-4 py-3 rounded-xl border bg-slate-50 font-semibold outline-none focus:border-blue-500">
                     <option value="밴드실">🎸 밴드실</option>
@@ -91,8 +78,8 @@
 
         <div id="calendar" class="mb-8"></div>
 
-        <section id="adminPanel" class="bg-orange-50 p-6 rounded-2xl border border-orange-200 shadow-inner">
-            <h2 class="text-sm font-black text-orange-700 mb-4 uppercase tracking-wider">User Approval Management</h2>
+        <section id="adminPanel" class="bg-orange-50 p-6 rounded-2xl border border-orange-200 shadow-inner mb-10">
+            <h2 class="text-sm font-black text-orange-700 mb-4 uppercase tracking-wider">사용자 승인 관리 (Admin Only)</h2>
             <div id="userList" class="space-y-2"></div>
         </section>
     </div>
@@ -100,15 +87,16 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, query, orderBy, addDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, query, addDoc, getDocs, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // Firebase 설정 (본인의 정보로 교체 권장)
         const firebaseConfig = {
-            "apiKey": "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8",
-            "authDomain": "muge-43e73.firebaseapp.com",
-            "projectId": "muge-43e73",
-            "storageBucket": "muge-43e73.firebasestorage.app",
-            "messagingSenderId": "356856775293",
-            "appId": "1:356856775293:web:7ad8abaf66febd0a9be714"
+            apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8",
+            authDomain: "muge-43e73.firebaseapp.com",
+            projectId: "muge-43e73",
+            storageBucket: "muge-43e73.firebasestorage.app",
+            messagingSenderId: "356856775293",
+            appId: "1:356856775293:web:7ad8abaf66febd0a9be714"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -116,11 +104,10 @@
         const db = getFirestore(app);
         let currentUserData = null;
 
-        // 예약 가능 시간 설정
+        // 예약 시간 옵션 생성 (09:00 ~ 22:00)
         const timeSelect = document.getElementById('bookTimeSelect');
-        for (let h = 9; h <= 22; h++) {
+        for (let h = 9; h <= 21; h++) {
             for (let m of ['00', '30']) {
-                if (h === 22 && m === '30') continue;
                 const hh = String(h).padStart(2, '0');
                 const opt = document.createElement('option');
                 opt.value = `${hh}:${m}`; opt.textContent = `${hh}:${m}`;
@@ -128,7 +115,7 @@
             }
         }
 
-        // 캘린더 초기화
+        // [캘린더 초기화]
         let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'timeGridWeek',
             locale: 'ko',
@@ -137,15 +124,13 @@
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             displayEventTime: false,
             allDaySlot: false,
-            
-            // [v3.5 핵심] 월 보기/주 보기 정보 분리 렌더링
             eventContent: function(arg) {
                 const room = arg.event.title.split(' | ')[0];
                 const user = arg.event.title.split(' | ')[1];
                 const timeStr = arg.event.extendedProps.shortTime;
 
                 if (arg.view.type === 'dayGridMonth') {
-                    // 월 보기: 시간(배지) + 장소명
+                    // 월 보기: [시간] 장소
                     return { html: `
                         <div class="month-event-box">
                             <span class="month-time">${timeStr}</span>
@@ -153,7 +138,7 @@
                         </div>` 
                     };
                 } else {
-                    // 주 보기: 장소명(Bold) + 예약자
+                    // 주 보기: 장소 + 👤 사용자
                     return { html: `
                         <div class="week-event-box">
                             <span class="week-room">${room}</span>
@@ -164,33 +149,48 @@
             },
             eventClick: async function(info) {
                 const owner = info.event.extendedProps.user;
-                if (auth.currentUser?.email === owner || currentUserData?.isAdmin) {
-                    if (confirm(`예약을 취소하시겠습니까?\n[${info.event.title.split(' | ')[0]}]`)) {
+                const isAdmin = currentUserData?.isAdmin === true;
+                if (auth.currentUser?.email === owner || isAdmin) {
+                    if (confirm(`예약을 삭제하시겠습니까?\n[${info.event.title.split(' | ')[0]}]`)) {
                         await deleteDoc(doc(db, "reservations", info.event.id));
                     }
-                } else { alert("본인의 예약만 관리 가능합니다."); }
+                } else { alert("본인 또는 관리자만 삭제 가능합니다."); }
             }
         });
         calendar.render();
 
+        // [로그인 상태 감시]
         onAuthStateChanged(auth, (user) => {
+            const ui = { auth: document.getElementById('authForm'), info: document.getElementById('userInfo'), book: document.getElementById('bookingSection'), admin: document.getElementById('adminPanel') };
             if (user) {
-                userInfo.style.display = 'flex'; authForm.style.display = 'none'; bookingSection.style.display = 'block';
+                ui.auth.style.display = 'none'; ui.info.style.display = 'flex'; ui.book.style.display = 'block';
                 document.getElementById('userDisplay').textContent = user.email.split('@')[0];
                 onSnapshot(doc(db, "users", user.uid), (snap) => {
                     if(snap.exists()) {
                         currentUserData = snap.data();
-                        if(currentUserData.isAdmin) { adminPanel.style.display = 'block'; loadUserList(); }
+                        if(currentUserData.isAdmin) { ui.admin.style.display = 'block'; loadUserList(); }
                     }
                 });
-            } else { userInfo.style.display = 'none'; authForm.style.display = 'block'; bookingSection.style.display = 'none'; adminPanel.style.display = 'none'; }
+            } else { ui.auth.style.display = 'block'; ui.info.style.display = 'none'; ui.book.style.display = 'none'; ui.admin.style.display = 'none'; }
         });
 
+        // [인증 로직]
+        document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value).catch(e => alert("로그인 실패: " + e.message));
+        document.getElementById('btnSignup').onclick = async () => {
+            try {
+                const u = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+                await setDoc(doc(db, "users", u.user.uid), { email: emailInput.value, approved: false, isAdmin: false });
+                alert("가입 성공! 관리자 승인 대기 중입니다.");
+            } catch(e) { alert("가입 실패: " + e.message); }
+        };
+        document.getElementById('btnLogout').onclick = () => signOut(auth);
+
+        // [예약 저장]
         document.getElementById('btnSave').onclick = async () => {
             const room = document.getElementById('roomName').value;
             const date = document.getElementById('bookDate').value;
             const time = document.getElementById('bookTimeSelect').value;
-            if(!date) return alert("날짜를 입력해주세요.");
+            if(!date) return alert("날짜를 선택해주세요.");
             const fullTime = `${date}T${time}`;
             
             const q = query(collection(db, "reservations"), where("room", "==", room));
@@ -198,16 +198,14 @@
             let isConflict = false;
             snap.forEach(d => { if (Math.abs(new Date(fullTime).getTime() - new Date(d.data().time).getTime()) < 2*60*60*1000) isConflict = true; });
             
-            if (isConflict) return alert("이미 예약된 시간입니다. (2시간 간격 유지)");
+            if (isConflict) return alert("중복 예약 불가 (2시간 간격 유지 필요)");
             await addDoc(collection(db, "reservations"), { 
-                user: auth.currentUser.email, 
-                room, 
-                time: fullTime,
-                shortTime: time 
+                user: auth.currentUser.email, room, time: fullTime, shortTime: time 
             });
-            alert("예약이 완료되었습니다!");
+            alert("예약 확정!");
         };
 
+        // [실시간 데이터 연동]
         onSnapshot(collection(db, "reservations"), (snap) => {
             const events = [];
             snap.forEach(doc => {
@@ -229,12 +227,7 @@
             return colors[room] || "#64748b";
         }
 
-        document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-        document.getElementById('btnSignup').onclick = async () => {
-            const u = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-            await setDoc(doc(db, "users", u.user.uid), { email: emailInput.value, approved: false, isAdmin: false });
-        };
-        document.getElementById('btnLogout').onclick = () => signOut(auth);
+        // [관리자 유저 리스트]
         function loadUserList() {
             onSnapshot(collection(db, "users"), (snap) => {
                 const list = document.getElementById('userList'); list.innerHTML = "";
@@ -242,7 +235,7 @@
                     if(uDoc.data().email !== auth.currentUser.email) 
                         list.innerHTML += `<div class="flex justify-between items-center p-3 bg-white rounded-xl border border-orange-100 text-xs shadow-sm">
                             <span class="font-bold">${uDoc.data().email}</span>
-                            <button onclick="window.toggleUser('${uDoc.id}', ${uDoc.data().approved})" class="bg-orange-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-orange-700">${uDoc.data().approved ? 'Approved' : 'Pending'}</button>
+                            <button onclick="window.toggleUser('${uDoc.id}', ${uDoc.data().approved})" class="bg-orange-600 text-white px-3 py-1.5 rounded-lg font-bold">${uDoc.data().approved ? '승인됨' : '대기중'}</button>
                         </div>`; 
                 });
             });
