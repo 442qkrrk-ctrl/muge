@@ -13,29 +13,35 @@
         
         #bookingSection, #userInfo, #adminUserList { display: none; }
         
-        /* [v5.5] 낭낭하고 명확한 입력 UI */
-        .big-input-box {
-            background: #ffffff;
-            border: 3px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 14px;
-            font-size: 16px;
-            font-weight: 800;
+        /* [v5.6] 낭낭한 한 줄 입력창 스타일 */
+        .input-row-container {
+            display: flex;
+            gap: 8px;
             width: 100%;
+            align-items: center;
+        }
+
+        .big-box {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px 10px !important;
+            font-size: 14px !important;
+            font-weight: 800;
             outline: none;
             transition: all 0.2s;
             text-align: center;
-        }
-        .big-input-box:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
-        
-        /* 선택된 날짜 표시 전용 */
-        .date-display {
-            background: #f8fafc;
-            color: #64748b;
-            border: 3px dashed #cbd5e1;
+            appearance: none;
         }
 
-        /* 캘린더 타이틀 (반응형 1-2줄) */
+        /* 각 요소별 비율 조절 */
+        #displayDate { flex: 2; background: #f8fafc; color: #065f46; border-style: dashed; }
+        #bookTimeSelect { flex: 1; background: #1e293b; color: white; border-color: #1e293b; }
+        #roomName { flex: 1.5; background: #f0fdf4; color: #065f46; border-color: #d1fae5; }
+
+        .big-box:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+
+        /* 캘린더 타이틀 */
         .fc-toolbar-title { display: flex !important; flex-direction: column !important; align-items: center !important; line-height: 1.1 !important; font-size: 0.85rem !important; font-weight: 800; color: #065f46; }
         .fc-toolbar-title::after { content: attr(data-month); font-size: 1.25rem !important; display: block; margin-top: 2px; }
 
@@ -43,6 +49,7 @@
             .max-w-md { max-width: 1100px !important; }
             .fc-toolbar-title { flex-direction: row !important; gap: 8px; font-size: 2rem !important; }
             .fc-toolbar-title::after { content: attr(data-month); font-size: 2rem !important; margin-top: 0; }
+            .big-box { font-size: 18px !important; padding: 20px !important; }
         }
 
         .fc { background: white; padding: 5px; border-radius: 1.25rem; border: 1px solid #e2e8f0; }
@@ -50,7 +57,6 @@
         .month-time { font-size: 8px; font-weight: 900; }
         .month-room { font-size: 10px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .fc-button-primary { background-color: #065f46 !important; border-color: #065f46 !important; }
-        button:active { scale: 0.96; transition: 0.1s; }
     </style>
 </head>
 <body class="min-h-screen pb-10">
@@ -65,40 +71,28 @@
         </header>
 
         <section id="authForm" class="bg-white p-5 rounded-2xl shadow-sm border mb-4">
-            <div class="flex flex-col md:flex-row gap-2 mb-2">
-                <input type="email" id="emailInput" placeholder="이메일" class="big-input-box text-sm">
-                <input type="password" id="passwordInput" placeholder="비번" class="big-input-box text-sm">
+            <div class="flex gap-2 mb-2">
+                <input type="email" id="emailInput" placeholder="이메일" class="flex-1 p-3 rounded-xl border text-sm outline-none">
+                <input type="password" id="passwordInput" placeholder="비번" class="flex-1 p-3 rounded-xl border text-sm outline-none">
             </div>
-            <button id="btnLogin" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl mt-2">로그인</button>
+            <button id="btnLogin" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">로그인</button>
         </section>
 
-        <section id="bookingSection" class="bg-white p-6 rounded-2xl shadow-xl border-t-8 border-t-emerald-500 mb-8">
-            <h2 class="text-center font-black text-slate-400 text-xs mb-4 uppercase tracking-widest">Selected Reservation</h2>
-            
-            <div class="flex flex-col gap-4">
-                <div class="relative">
-                    <label class="absolute -top-2 left-4 bg-white px-2 text-[10px] font-black text-emerald-600">DATE</label>
-                    <input type="text" id="displayDate" class="big-input-box date-display" readonly placeholder="달력에서 날짜를 선택하세요">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="relative">
-                        <label class="absolute -top-2 left-4 bg-white px-2 text-[10px] font-black text-emerald-600">TIME</label>
-                        <select id="bookTimeSelect" class="big-input-box bg-slate-800 text-white border-slate-800"></select>
-                    </div>
-                    <div class="relative">
-                        <label class="absolute -top-2 left-4 bg-white px-2 text-[10px] font-black text-emerald-600">ROOM</label>
-                        <select id="roomName" class="big-input-box">
-                            <option value="밴드실">🎸 밴드실</option>
-                            <option value="제빵실">🍞 제빵실</option>
-                            <option value="공작실">🔨 공작실</option>
-                            <option value="강의실">📖 강의실</option>
-                            <option value="다목적실">✨ 다목적실</option>
-                        </select>
-                    </div>
-                </div>
+        <section id="bookingSection" class="bg-white p-4 rounded-2xl shadow-lg border-b-4 border-b-emerald-500 mb-6">
+            <div class="input-row-container">
+                <input type="text" id="displayDate" class="big-box" readonly placeholder="날짜 선택">
+                
+                <select id="bookTimeSelect" class="big-box"></select>
+                
+                <select id="roomName" class="big-box">
+                    <option value="밴드실">🎸 밴드실</option>
+                    <option value="제빵실">🍞 제빵실</option>
+                    <option value="공작실">🔨 공작실</option>
+                    <option value="강의실">📖 강의실</option>
+                    <option value="다목적실">✨ 다목적실</option>
+                </select>
             </div>
-            <button id="btnSave" class="w-full mt-6 bg-emerald-600 text-white font-black py-5 rounded-2xl shadow-lg text-lg">이 일정으로 예약 확정</button>
+            <button id="btnSave" class="w-full mt-4 bg-emerald-600 text-white font-black py-4 rounded-xl shadow-md text-base">예약 확정</button>
         </section>
 
         <div id="calendar" class="mb-10"></div>
@@ -127,7 +121,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 시간 옵션 (09:00~21:30)
+        // 시간 옵션
         const timeSelect = document.getElementById('bookTimeSelect');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
@@ -136,19 +130,18 @@
             });
         }
 
-        let selectedFullDate = ""; // 실제 저장용 날짜 변수
+        let selectedFullDate = ""; 
 
         let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko',
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             selectable: true,
-            // [v5.5] 날짜 클릭 시 명확하게 입력창에 뿌려주기
             dateClick: function(info) {
-                selectedFullDate = info.dateStr; // "2026-02-14"
-                const dateParts = selectedFullDate.split('-');
-                document.getElementById('displayDate').value = `${dateParts[0]}년 ${dateParts[1]}월 ${dateParts[2]}일`;
-                // 터치 후 예약 섹션으로 부드럽게 스크롤
+                selectedFullDate = info.dateStr; 
+                const parts = selectedFullDate.split('-');
+                // 한 줄 레이아웃을 위해 날짜 형식을 간결하게 "02.14" 식으로 표시
+                document.getElementById('displayDate').value = `${parts[1]}.${parts[2]}`;
                 document.getElementById('bookingSection').scrollIntoView({ behavior: 'smooth' });
             },
             datesSet: function() {
@@ -194,10 +187,10 @@
         document.getElementById('btnSave').onclick = async () => {
             const room = document.getElementById('roomName').value;
             const time = timeSelect.value;
-            if(!selectedFullDate) return alert("먼저 달력에서 날짜를 클릭해주세요! 👇");
+            if(!selectedFullDate) return alert("달력에서 날짜를 먼저 클릭해주세요!");
             
             await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time: `${selectedFullDate}T${time}`, shortTime: time });
-            alert(`✅ 예약 완료!\n${selectedFullDate} ${time} [${room}]`);
+            alert(`✅ 예약 완료: ${selectedFullDate} ${time}`);
         };
 
         onSnapshot(collection(db, "reservations"), (snap) => {
