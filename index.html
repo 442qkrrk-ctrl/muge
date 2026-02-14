@@ -9,68 +9,63 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
         
         #bookingSection, #userInfo, #adminUserList { display: none; }
         
-        /* 낭낭한 한 줄 예약바 */
-        .input-row { display: flex; gap: 8px; width: 100%; margin-bottom: 12px; }
+        /* [v6.0] PC/모바일 공용 낭낭한 한 줄 UI */
+        .input-row { display: flex; gap: 8px; width: 100%; margin-bottom: 15px; }
         .big-box { 
-            flex: 1; min-height: 56px; background: white; border: 2px solid #e2e8f0; 
-            border-radius: 12px; font-size: 15px !important; font-weight: 800; 
-            text-align: center; cursor: pointer; appearance: none;
+            flex: 1; min-height: 60px; background: white; border: 3px solid #e2e8f0; 
+            border-radius: 14px; font-size: 16px !important; font-weight: 800; 
+            text-align: center; cursor: pointer; transition: all 0.2s;
         }
+        .big-box:hover { border-color: #10b981; }
         
-        /* 요소별 강조 색상 */
-        #displayDate { flex: 1.2; background: #f1f5f9; color: #0f172a; border-style: dashed; }
+        #displayDate { flex: 1.2; background: #f1f5f9; color: #0f172a; border-style: dashed; cursor: default; }
         #bookTimeSelect { background: #1e293b; color: white; border-color: #1e293b; }
         #roomName { flex: 1.3; background: #f0fdf4; color: #166534; border-color: #d1fae5; }
 
-        /* 캘린더 커스텀 */
-        .fc { background: white; padding: 10px; border-radius: 1.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: none; }
-        .fc-toolbar-title { display: flex !important; flex-direction: column !important; align-items: center !important; font-size: 0.9rem !important; font-weight: 900; color: #065f46; }
-        .fc-toolbar-title::after { content: attr(data-month); font-size: 1.3rem !important; display: block; }
+        /* 캘린더 클릭 활성화 */
+        .fc-daygrid-day { cursor: pointer !important; transition: 0.2s; }
+        .fc-daygrid-day:hover { background-color: #f0fdf4 !important; }
+        
+        .fc { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: none; }
+        .fc-toolbar-title { font-weight: 900; color: #065f46; }
 
-        @media (min-width: 768px) {
-            .max-w-md { max-width: 1000px !important; }
-            .fc-toolbar-title { flex-direction: row !important; gap: 10px; font-size: 2rem !important; }
-            .fc-toolbar-title::after { font-size: 2rem !important; }
-            .big-box { min-height: 70px; font-size: 18px !important; }
+        @media (max-width: 768px) {
+            .input-row { gap: 4px; }
+            .big-box { min-height: 50px; font-size: 13px !important; border-width: 2px; }
+            .fc-toolbar-title { font-size: 1.2rem !important; }
         }
 
-        .fc-daygrid-event { border: none !important; border-radius: 4px !important; }
-        .month-event-box { padding: 2px; line-height: 1.2; display: flex; flex-direction: column; }
-        .m-time { font-size: 8px; font-weight: 900; opacity: 0.8; }
-        .m-room { font-size: 10px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
         .fc-button-primary { background-color: #059669 !important; border: none !important; font-weight: bold !important; }
-        button:active { transform: scale(0.96); transition: 0.1s; }
     </style>
 </head>
 <body class="pb-20">
 
-    <div class="max-w-md mx-auto px-4 pt-8">
-        <header class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-black text-emerald-800 tracking-tighter">무계마을학교 🏫</h1>
-            <div id="userInfo">
-                <span id="userDisplay" class="text-xs font-bold text-slate-400 block text-right"></span>
-                <button id="btnLogout" class="text-xs text-red-400 font-bold float-right">로그아웃</button>
+    <div class="max-w-[1000px] mx-auto px-4 pt-8">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-3xl font-black text-emerald-800 tracking-tighter">무계마을학교 🏫</h1>
+            <div id="userInfo" class="hidden">
+                <span id="userDisplay" class="text-sm font-bold text-slate-500 mr-4"></span>
+                <button id="btnLogout" class="text-sm text-red-500 font-bold border-b-2 border-red-200">로그아웃</button>
             </div>
         </header>
 
-        <section id="authForm" class="bg-white p-6 rounded-3xl shadow-xl border border-slate-100 mb-6">
-            <div class="space-y-3">
-                <input type="email" id="emailInput" placeholder="이메일 주소" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:border-emerald-500">
-                <input type="password" id="passwordInput" placeholder="비밀번호" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:border-emerald-500">
-                <button id="btnLogin" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl text-lg shadow-lg shadow-emerald-100">입장하기</button>
+        <section id="authForm" class="max-w-md mx-auto bg-white p-8 rounded-3xl shadow-2xl mb-10">
+            <div class="space-y-4">
+                <input type="email" id="emailInput" placeholder="이메일" class="w-full p-4 rounded-xl border-2 outline-none focus:border-emerald-500">
+                <input type="password" id="passwordInput" placeholder="비밀번호" class="w-full p-4 rounded-xl border-2 outline-none focus:border-emerald-500">
+                <button id="btnLogin" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl text-xl">로그인 / 가입</button>
             </div>
         </section>
 
-        <section id="bookingSection" class="mb-8">
-            <div class="bg-emerald-600 text-white text-[10px] font-black px-4 py-1 rounded-t-xl inline-block ml-2">QUICK BOOKING</div>
-            <div class="bg-white p-4 rounded-2xl rounded-tl-none shadow-2xl border-t-4 border-emerald-600">
+        <section id="bookingSection" class="mb-12">
+            <div class="bg-white p-5 rounded-3xl shadow-2xl border-b-8 border-emerald-600">
+                <p class="text-xs font-black text-emerald-600 mb-3 ml-1 uppercase">Step 1: Click Date on Calendar / Step 2: Set Time & Room</p>
                 <div class="input-row">
-                    <input type="text" id="displayDate" class="big-box" readonly placeholder="날짜 클릭">
+                    <input type="text" id="displayDate" class="big-box" readonly placeholder="날짜를 클릭하세요">
                     <select id="bookTimeSelect" class="big-box"></select>
                     <select id="roomName" class="big-box">
                         <option value="밴드실">🎸 밴드실</option>
@@ -80,22 +75,17 @@
                         <option value="다목적실">✨ 다목적실</option>
                     </select>
                 </div>
-                <button id="btnSave" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl text-base shadow-lg">이 일정으로 예약 확정하기</button>
+                <button id="btnSave" class="w-full bg-slate-900 text-white font-black py-5 rounded-2xl text-xl hover:bg-emerald-700 transition-colors">예약 확정하기</button>
             </div>
         </section>
 
         <div id="calendar"></div>
-
-        <div id="adminUserList" class="mt-10 bg-orange-50 p-6 rounded-3xl border-2 border-dashed border-orange-200">
-            <h3 class="font-black text-orange-700 mb-4 flex items-center gap-2">👨‍🏫 관리자 전용 가입자 명단</h3>
-            <ul id="userUl" class="space-y-2"></ul>
-        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8",
@@ -110,7 +100,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 시간 옵션 생성
+        // 시간 옵션
         const timeSelect = document.getElementById('bookTimeSelect');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
@@ -122,29 +112,20 @@
         let selectedFullDate = ""; 
 
         let calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
+            initialView: 'dayGridMonth',
             locale: 'ko',
-            headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+            headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
             selectable: true,
-            // [핵심] 날짜 클릭 시 동작
+            // [PC 클릭 보강]
             dateClick: function(info) {
+                console.log("Date Clicked:", info.dateStr); // 디버깅용
                 selectedFullDate = info.dateStr; 
                 const parts = selectedFullDate.split('-');
-                document.getElementById('displayDate').value = `${parts[1]}/${parts[2]}`;
-                // 예약바가 강조되도록 살짝 흔들기 효과(선택사항) 및 상단 이동
+                document.getElementById('displayDate').value = `${parts[0]}년 ${parts[1]}월 ${parts[2]}일`;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
-            datesSet: function() {
-                const titleEl = document.querySelector('.fc-toolbar-title');
-                if (titleEl) {
-                    const parts = calendar.view.title.split(' ');
-                    if(parts.length >= 2) { titleEl.innerText = parts[0]; titleEl.setAttribute('data-month', parts[1]); }
-                }
-            },
             eventContent: function(arg) {
-                const room = arg.event.title;
-                const timeStr = arg.event.extendedProps.shortTime;
-                return { html: `<div class="month-event-box"><span class="m-time">${timeStr}</span><span class="m-room">${room}</span></div>` };
+                return { html: `<div class="p-1 bg-emerald-50 text-emerald-800 rounded text-[10px] font-bold"><b>${arg.event.extendedProps.shortTime}</b> ${arg.event.title}</div>` };
             },
             eventClick: async function(info) {
                 if (confirm(`'${info.event.title}' 예약을 삭제할까요?`)) {
@@ -155,51 +136,47 @@
         calendar.render();
 
         onAuthStateChanged(auth, async (user) => {
-            const ui = { auth: document.getElementById('authForm'), info: document.getElementById('userInfo'), book: document.getElementById('bookingSection'), admin: document.getElementById('adminUserList') };
+            const ui = { auth: document.getElementById('authForm'), info: document.getElementById('userInfo'), book: document.getElementById('bookingSection') };
             if (user) {
-                ui.auth.style.display = 'none'; ui.info.style.display = 'block'; ui.book.style.display = 'block';
-                document.getElementById('userDisplay').textContent = user.email.split('@')[0] + "님 반가워요!";
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && userDoc.data().isAdmin) {
-                    ui.admin.style.display = 'block';
-                    onSnapshot(collection(db, "users"), (snap) => {
-                        const userUl = document.getElementById('userUl'); userUl.innerHTML = "";
-                        snap.forEach(doc => {
-                            const d = doc.data();
-                            const li = document.createElement('li'); li.className = "flex justify-between p-3 bg-white rounded-xl text-sm font-bold text-slate-600 shadow-sm";
-                            li.innerHTML = `<span>👤 ${d.email}</span><span class="text-slate-300 font-normal">${d.joinedAt?.split('T')[0] || ''}</span>`;
-                            userUl.appendChild(li);
-                        });
-                    });
-                }
-            } else { ui.auth.style.display = 'block'; ui.info.style.display = 'none'; ui.book.style.display = 'none'; ui.admin.style.display = 'none'; }
+                ui.auth.style.display = 'none'; ui.info.classList.remove('hidden'); ui.book.style.display = 'block';
+                document.getElementById('userDisplay').textContent = user.email.split('@')[0] + "님 로그온";
+            } else { ui.auth.style.display = 'block'; ui.info.classList.add('hidden'); ui.book.style.display = 'none'; }
         });
 
-        document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value).catch(e => alert("로그인 실패! 이메일과 비번을 확인하세요."));
+        document.getElementById('btnLogin').onclick = async () => {
+            const email = emailInput.value; const pw = passwordInput.value;
+            try { await signInWithEmailAndPassword(auth, email, pw); } 
+            catch { 
+                try { 
+                    const u = await createUserWithEmailAndPassword(auth, email, pw); 
+                    await setDoc(doc(db, "users", u.user.uid), { email, isAdmin: false, joinedAt: new Date().toISOString() });
+                } catch(e) { alert("로그인 정보를 확인해주세요."); }
+            }
+        };
         document.getElementById('btnLogout').onclick = () => signOut(auth);
 
         document.getElementById('btnSave').onclick = async () => {
             const room = document.getElementById('roomName').value;
             const time = timeSelect.value;
-            if(!selectedFullDate) return alert("먼저 아래 달력에서 원하는 날짜를 클릭하세요! 👇");
+            if(!selectedFullDate) return alert("달력에서 날짜를 먼저 클릭해주세요!");
             
-            await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time: `${selectedFullDate}T${time}`, shortTime: time });
-            alert(`✅ 예약이 확정되었습니다!\n일정: ${selectedFullDate} ${time}`);
+            await addDoc(collection(db, "reservations"), { 
+                user: auth.currentUser.email, 
+                room, 
+                time: `${selectedFullDate}T${time}`, 
+                shortTime: time 
+            });
+            alert(`✅ 예약 완료: ${selectedFullDate} ${time}`);
         };
 
         onSnapshot(collection(db, "reservations"), (snap) => {
             const events = [];
             snap.forEach(doc => {
                 const d = doc.data();
-                events.push({ id: doc.id, title: d.room, start: d.time, backgroundColor: getRoomColor(d.room), extendedProps: { shortTime: d.shortTime } });
+                events.push({ id: doc.id, title: d.room, start: d.time, extendedProps: { shortTime: d.shortTime } });
             });
             calendar.removeAllEvents(); calendar.addEventSource(events);
         });
-
-        function getRoomColor(room) {
-            const colors = { "밴드실": "#10b981", "제빵실": "#f59e0b", "공작실": "#6366f1", "강의실": "#3b82f6", "다목적실": "#8b5cf6" };
-            return colors[room.trim()] || "#64748b";
-        }
     </script>
 </body>
 </html>
