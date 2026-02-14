@@ -12,30 +12,46 @@
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
         
         /* 헤더 스타일 */
-        .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; align-items: center !important; gap: 10px; padding: 12px 5px !important; }
+        .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 10px 5px !important; }
         .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 900; color: #1e293b; }
-        .fc-button { padding: 5px 10px !important; font-size: 11px !important; font-weight: 800 !important; }
-        .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; }
+        .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; font-size: 11px !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
 
-        /* [v7.1 핵심] 주 단위 보기 터치 영역 확대 */
-        .fc-timegrid-slot { height: 60px !important; } /* 시간 칸 높이를 60px로 대폭 확대 */
-        .fc-timegrid-slot-label { vertical-align: middle !important; }
+        /* [v7.5 핵심] 예약 칩이 칸 전체를 가리지 않도록 너비 조정 */
+        .fc-timegrid-event-harness {
+            max-width: 85% !important; /* 칩의 너비를 85%로 제한하여 옆에 클릭 가능한 틈새 확보 */
+            margin-right: auto !important;
+        }
         
-        /* 날짜 헤더 클릭 가능하게 시각적 표시 */
-        .fc-col-header-cell { cursor: pointer; background-color: #f1f5f9; transition: background 0.2s; }
-        .fc-col-header-cell:active { background-color: #e2e8f0; }
+        .fc-v-event {
+            border: none !important;
+            background: none !important; /* 기본 배경 제거 */
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1); /* 살짝 입체감 */
+        }
 
-        /* 이벤트 칩 */
-        .event-chip { font-size: 10px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; border: none; }
+        /* 시간 칸 높이 */
+        .fc-timegrid-slot { height: 50px !important; cursor: pointer; } 
+
+        /* 시설별 칩 스타일 */
+        .event-chip { 
+            font-size: 10px; 
+            padding: 4px; 
+            border-radius: 6px; 
+            color: white; 
+            font-weight: 700; 
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
         .bg-band { background-color: #10b981 !important; }
         .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; }
         .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
 
-        #calendar { background: white; border-radius: 16px; padding: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-
+        #calendar { background: white; border-radius: 16px; padding: 5px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         #bookingModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
         @media (max-width: 768px) { #bookingModal { align-items: flex-end; } }
     </style>
@@ -51,27 +67,21 @@
         <div id="calendar"></div>
 
         <div id="bookingModal">
-            <div class="modal-content w-full bg-white max-w-md p-6 rounded-t-3xl md:rounded-3xl shadow-2xl">
+            <div class="modal-content w-full bg-white max-w-md p-6 rounded-t-3xl md:rounded-3xl">
                 <h3 id="modalDateDisplay" class="font-black text-lg mb-4 text-slate-800 text-center">예약 일시</h3>
                 <div class="grid grid-cols-2 gap-3 mb-6">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">시간</label>
-                        <select id="modalTime" class="w-full p-4 border rounded-xl font-bold bg-slate-50 text-sm"></select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 mb-1">시설</label>
-                        <select id="modalRoom" class="w-full p-4 border rounded-xl font-bold bg-slate-50 text-sm">
-                            <option value="밴드실">🎸 밴드실</option>
-                            <option value="제빵실">🍞 제빵실</option>
-                            <option value="공작실">🔨 공작실</option>
-                            <option value="강의실">📖 강의실</option>
-                            <option value="다목적실">✨ 다목적실</option>
-                        </select>
-                    </div>
+                    <select id="modalTime" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm"></select>
+                    <select id="modalRoom" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm">
+                        <option value="밴드실">🎸 밴드실</option>
+                        <option value="제빵실">🍞 제빵실</option>
+                        <option value="공작실">🔨 공작실</option>
+                        <option value="강의실">📖 강의실</option>
+                        <option value="다목적실">✨ 다목적실</option>
+                    </select>
                 </div>
                 <div class="flex gap-2">
                     <button id="btnCancel" class="flex-1 py-4 text-slate-400 font-bold">닫기</button>
-                    <button id="btnConfirm" class="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl">예약 완료</button>
+                    <button id="btnConfirm" class="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl">예약 확정</button>
                 </div>
             </div>
         </div>
@@ -113,25 +123,23 @@
             slotMinTime: '09:00:00',
             slotMaxTime: '22:00:00',
             allDaySlot: false,
-            navLinks: true, // [v7.1] 날짜 숫자를 누르면 해당 날짜 보기로 이동 가능
+            navLinks: true, 
+            navLinkDayClick: function(date) {
+                currentDay = date.toISOString().split('T')[0];
+                document.getElementById('modalDateDisplay').innerText = currentDay + " 예약";
+                modal.style.display = 'flex';
+            },
             headerToolbar: {
                 left: 'title',
                 center: '',
                 right: 'prev,next today dayGridMonth,timeGridWeek'
             },
-            // [v7.1 핵심] 주 보기/월 보기 공통 클릭 이벤트
-            dateClick: (info) => {
+            dateClick: function(info) {
                 if (!auth.currentUser) return alert("로그인 필요");
-                
-                // 시간 정보를 제외한 날짜(YYYY-MM-DD)만 추출
                 currentDay = info.dateStr.split('T')[0];
-                
-                // 만약 시간을 직접 눌렀다면 해당 시간도 기본값으로 세팅
                 if (info.dateStr.includes('T')) {
-                    const clickedTime = info.dateStr.split('T')[1].substring(0, 5);
-                    modalTime.value = clickedTime;
+                    modalTime.value = info.dateStr.split('T')[1].substring(0, 5);
                 }
-
                 document.getElementById('modalDateDisplay').innerText = currentDay + " 예약";
                 modal.style.display = 'flex';
             },
@@ -141,7 +149,7 @@
                 else if(arg.event.title.includes("제빵")) cls = "bg-bread";
                 else if(arg.event.title.includes("공작")) cls = "bg-work";
                 else if(arg.event.title.includes("강의")) cls = "bg-study";
-                return { html: `<div class="event-chip ${cls}">${arg.event.extendedProps.shortTime} ${arg.event.title}</div>` };
+                return { html: `<div class="event-chip ${cls}">${arg.event.title}</div>` };
             },
             eventClick: async (info) => {
                 if (confirm('삭제하시겠습니까?')) await deleteDoc(doc(db, "reservations", info.event.id));
@@ -166,7 +174,7 @@
             snap.forEach(doc => {
                 const d = doc.data();
                 const startTime = new Date(d.time);
-                const endTime = new Date(startTime.getTime() + 60 * 60000);
+                const endTime = new Date(startTime.getTime() + 30 * 60000); // 30분 단위 표시
                 events.push({ id: doc.id, title: d.room, start: d.time, end: endTime.toISOString(), extendedProps: { shortTime: d.shortTime } });
             });
             calendar.removeAllEvents(); calendar.addEventSource(events);
