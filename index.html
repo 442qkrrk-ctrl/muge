@@ -11,43 +11,30 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
         
-        /* [v6.9] 헤더 버튼 한 줄 정렬 핵심 CSS */
+        /* 헤더 버튼 및 타이틀 정렬 */
         .fc-header-toolbar {
             display: flex !important;
-            flex-wrap: wrap; /* 모바일에서 자동 줄바꿈 허용 */
+            flex-wrap: wrap;
             justify-content: space-between !important;
             align-items: center !important;
             gap: 10px;
-            padding: 10px 5px !important;
+            padding: 12px 5px !important;
         }
-
-        /* 버튼 그룹들을 한 줄로 모으기 */
-        .fc-toolbar-chunk {
-            display: flex !important;
-            align-items: center !important;
-            gap: 4px;
-        }
-
         .fc-toolbar-title { 
             font-size: 1.1rem !important; 
             font-weight: 900; 
             color: #1e293b;
-            margin-right: auto; /* 타이틀을 왼쪽으로 밀기 */
         }
-
-        /* 버튼 스타일 슬림화 */
         .fc-button {
-            padding: 6px 10px !important;
+            padding: 5px 10px !important;
             font-size: 11px !important;
             font-weight: 800 !important;
-            text-transform: uppercase;
         }
-
         .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
 
-        /* 시설별 칩 */
-        .event-chip { font-size: 9px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; }
+        /* 이벤트 디자인 */
+        .event-chip { font-size: 10px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; border: none; height: 100%; }
         .bg-band { background-color: #10b981 !important; }
         .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; }
@@ -56,10 +43,8 @@
 
         #calendar { background: white; border-radius: 16px; padding: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
 
-        @media (max-width: 640px) {
-            .fc-toolbar-title { width: 100%; text-align: left; margin-bottom: 5px; }
-            .fc-header-toolbar { justify-content: flex-start !important; }
-        }
+        /* 주 단위 보기에서 시간 열 너비 조정 */
+        .fc-timegrid-slot { height: 40px !important; } 
 
         #bookingModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
         @media (max-width: 768px) { #bookingModal { align-items: flex-end; } }
@@ -79,8 +64,8 @@
             <div class="modal-content w-full bg-white max-w-md p-6 rounded-t-3xl md:rounded-3xl shadow-2xl">
                 <h3 id="modalDateDisplay" class="font-black text-lg mb-4 text-slate-800">예약 일시</h3>
                 <div class="grid grid-cols-2 gap-3 mb-6">
-                    <select id="modalTime" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm outline-none focus:border-emerald-500"></select>
-                    <select id="modalRoom" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm outline-none focus:border-emerald-500">
+                    <select id="modalTime" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm"></select>
+                    <select id="modalRoom" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm">
                         <option value="밴드실">🎸 밴드실</option>
                         <option value="제빵실">🍞 제빵실</option>
                         <option value="공작실">🔨 공작실</option>
@@ -129,10 +114,14 @@
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko',
             height: 'auto',
+            // [핵심 v7.0] 시간 표시 범위 설정 (오전 9시 ~ 오후 10시)
+            slotMinTime: '09:00:00',
+            slotMaxTime: '22:00:00',
+            allDaySlot: false, // 종일 이벤트 칸 숨기기
             headerToolbar: {
                 left: 'title',
                 center: '',
-                right: 'prev,next today dayGridMonth,timeGridWeek' // [핵심] 한 줄로 나열
+                right: 'prev,next today dayGridMonth,timeGridWeek'
             },
             dateClick: (info) => {
                 if (!auth.currentUser) return alert("로그인 필요");
@@ -171,7 +160,7 @@
             snap.forEach(doc => {
                 const d = doc.data();
                 const startTime = new Date(d.time);
-                const endTime = new Date(startTime.getTime() + 30 * 60000);
+                const endTime = new Date(startTime.getTime() + 60 * 60000); // 가시성을 위해 기본 1시간 표시
                 events.push({ id: doc.id, title: d.room, start: d.time, end: endTime.toISOString(), extendedProps: { shortTime: d.shortTime } });
             });
             calendar.removeAllEvents(); calendar.addEventSource(events);
