@@ -11,21 +11,40 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
         
-        /* 헤더 스타일 최적화 */
+        /* 헤더 스타일 */
         .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 10px 5px !important; }
         .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 900; color: #1e293b; }
         .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; font-size: 11px !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
 
-        /* [v7.4] 시간 칸 높이 정상화 (적당한 터치감) */
-        .fc-timegrid-slot { height: 45px !important; } 
+        /* [v7.5 핵심] 예약 칩이 칸 전체를 가리지 않도록 너비 조정 */
+        .fc-timegrid-event-harness {
+            max-width: 85% !important; /* 칩의 너비를 85%로 제한하여 옆에 클릭 가능한 틈새 확보 */
+            margin-right: auto !important;
+        }
         
-        /* 날짜 헤더 클릭 가능 스타일 */
-        .fc-col-header-cell { background-color: #fcfcfc; cursor: pointer; }
-        .fc-col-header-cell:hover { background-color: #f1f5f9; }
+        .fc-v-event {
+            border: none !important;
+            background: none !important; /* 기본 배경 제거 */
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1); /* 살짝 입체감 */
+        }
 
-        /* 시설별 칩 */
-        .event-chip { font-size: 10px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; overflow: hidden; }
+        /* 시간 칸 높이 */
+        .fc-timegrid-slot { height: 50px !important; cursor: pointer; } 
+
+        /* 시설별 칩 스타일 */
+        .event-chip { 
+            font-size: 10px; 
+            padding: 4px; 
+            border-radius: 6px; 
+            color: white; 
+            font-weight: 700; 
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
         .bg-band { background-color: #10b981 !important; }
         .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; }
@@ -104,9 +123,8 @@
             slotMinTime: '09:00:00',
             slotMaxTime: '22:00:00',
             allDaySlot: false,
-            // [v7.4] 날짜 클릭 활성화
             navLinks: true, 
-            navLinkDayClick: function(date, jsEvent) {
+            navLinkDayClick: function(date) {
                 currentDay = date.toISOString().split('T')[0];
                 document.getElementById('modalDateDisplay').innerText = currentDay + " 예약";
                 modal.style.display = 'flex';
@@ -131,7 +149,7 @@
                 else if(arg.event.title.includes("제빵")) cls = "bg-bread";
                 else if(arg.event.title.includes("공작")) cls = "bg-work";
                 else if(arg.event.title.includes("강의")) cls = "bg-study";
-                return { html: `<div class="event-chip ${cls}">${arg.event.extendedProps.shortTime} ${arg.event.title}</div>` };
+                return { html: `<div class="event-chip ${cls}">${arg.event.title}</div>` };
             },
             eventClick: async (info) => {
                 if (confirm('삭제하시겠습니까?')) await deleteDoc(doc(db, "reservations", info.event.id));
@@ -156,7 +174,7 @@
             snap.forEach(doc => {
                 const d = doc.data();
                 const startTime = new Date(d.time);
-                const endTime = new Date(startTime.getTime() + 60 * 60000);
+                const endTime = new Date(startTime.getTime() + 30 * 60000); // 30분 단위 표시
                 events.push({ id: doc.id, title: d.room, start: d.time, end: endTime.toISOString(), extendedProps: { shortTime: d.shortTime } });
             });
             calendar.removeAllEvents(); calendar.addEventSource(events);
