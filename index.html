@@ -11,63 +11,68 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
         
-        /* 타이틀 스타일 */
-        .main-title { font-size: 1.5rem; font-weight: 900; color: #065f46; letter-spacing: -1px; }
+        .main-title { font-size: 1.4rem; font-weight: 900; color: #065f46; letter-spacing: -1px; }
 
-        /* [v6.5] 시설 이름 짤림 방지 및 가독성 스타일 */
-        #calendar { max-width: 100% !important; margin: 0 auto; background: white; border-radius: 15px; }
+        /* [v6.6] 캘린더 및 주 단위 보기 최적화 */
+        #calendar { max-width: 100% !important; background: white; border-radius: 15px; overflow: hidden; }
         
-        /* 이벤트 칩 디자인 최적화 */
-        .fc-event { border: none !important; background: none !important; }
+        /* 버튼 스타일 커스텀 */
+        .fc-button-primary { background-color: #10b981 !important; border: none !important; font-weight: 800 !important; font-size: 12px !important; }
+        .fc-button-active { background-color: #059669 !important; }
+
+        /* 이벤트 칩 공통 스타일 */
         .event-chip {
             font-size: 9px !important;
-            line-height: 1.1;
             padding: 2px 4px;
-            margin: 1px 0;
             border-radius: 4px;
             color: white;
             font-weight: 700;
             display: block;
-            white-space: nowrap; /* 한 줄 유지 */
-            overflow: hidden;    /* 넘치면 숨김 */
-            text-overflow: clip; /* 짤리더라도 점(..) 대신 글자 끝까지 표시 */
+            border: none;
         }
 
-        /* 시설별 고유 색상 (가시성 확보) */
-        .bg-band { background-color: #10b981 !important; } /* 밴드실 - 초록 */
-        .bg-bread { background-color: #f59e0b !important; } /* 제빵실 - 주황 */
-        .bg-work { background-color: #6366f1 !important; }  /* 공작실 - 보라 */
-        .bg-study { background-color: #3b82f6 !important; } /* 강의실 - 파랑 */
-        .bg-multi { background-color: #ec4899 !important; } /* 다목적실 - 핑크 */
+        /* 시설별 색상 */
+        .bg-band { background-color: #10b981 !important; }
+        .bg-bread { background-color: #f59e0b !important; }
+        .bg-work { background-color: #6366f1 !important; }
+        .bg-study { background-color: #3b82f6 !important; }
+        .bg-multi { background-color: #ec4899 !important; }
 
-        /* 모바일 헤더 압축 */
+        /* 모바일 대응 */
         @media (max-width: 768px) {
-            .fc-toolbar-title { font-size: 1rem !important; }
-            .fc-header-toolbar { margin-bottom: 0.5rem !important; padding: 5px !important; }
-            #bookingModal { align-items: flex-end; }
-            .modal-content { border-radius: 20px 20px 0 0; }
+            .fc-toolbar { flex-direction: column; gap: 10px; }
+            .fc-toolbar-chunk { display: flex; justify-content: center; width: 100%; }
+            .main-title { font-size: 1.2rem; text-align: center; }
         }
 
-        #bookingModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; }
+        #bookingModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+        @media (max-width: 768px) { #bookingModal { align-items: flex-end; } }
     </style>
 </head>
 <body class="p-2 md:p-8">
 
-    <div class="max-w-[1000px] mx-auto">
-        <header class="flex justify-between items-center py-4 px-1">
+    <div class="max-w-[1100px] mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center py-4 px-1 gap-4">
             <h1 class="main-title">무계마을학교 시설 예약</h1>
-            <button id="btnLogout" class="text-xs font-bold text-red-400">로그아웃</button>
+            <div class="flex items-center gap-4">
+                <span id="userDisplay" class="text-xs font-bold text-slate-500"></span>
+                <button id="btnLogout" class="text-xs font-bold text-red-400 border-b border-red-200">로그아웃</button>
+            </div>
         </header>
 
-        <div id="calendar" class="shadow-sm border border-slate-100"></div>
+        <div id="calendar" class="shadow-lg border border-slate-100"></div>
 
         <div id="bookingModal">
-            <div class="modal-content w-full bg-white max-w-md">
-                <div class="p-6 space-y-4">
-                    <h3 id="modalDateDisplay" class="font-black text-lg text-emerald-800">날짜 선택</h3>
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="modalTime" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm"></select>
-                        <select id="modalRoom" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm">
+            <div class="modal-content w-full bg-white max-w-md p-6 rounded-t-3xl md:rounded-3xl shadow-2xl">
+                <h3 id="modalDateDisplay" class="font-black text-xl text-emerald-800 mb-4">날짜 선택</h3>
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">시간 선택</label>
+                        <select id="modalTime" class="w-full p-4 border rounded-xl font-bold bg-slate-50"></select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 mb-1">시설 선택</label>
+                        <select id="modalRoom" class="w-full p-4 border rounded-xl font-bold bg-slate-50">
                             <option value="밴드실">🎸 밴드실</option>
                             <option value="제빵실">🍞 제빵실</option>
                             <option value="공작실">🔨 공작실</option>
@@ -75,10 +80,10 @@
                             <option value="다목적실">✨ 다목적실</option>
                         </select>
                     </div>
-                    <div class="flex gap-3">
-                        <button id="btnCancel" class="flex-1 py-4 text-slate-400 font-bold">취소</button>
-                        <button id="btnConfirm" class="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl shadow-lg">예약 확정</button>
-                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button id="btnCancel" class="flex-1 py-4 text-slate-400 font-bold">취소</button>
+                    <button id="btnConfirm" class="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl shadow-lg">예약 완료</button>
                 </div>
             </div>
         </div>
@@ -114,31 +119,43 @@
         const modal = document.getElementById('bookingModal');
 
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridMonth',
+            initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko',
             height: 'auto',
-            headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek' // [v6.6] 주 단위 보기 버튼 추가
+            },
+            slotMinTime: '09:00:00',
+            slotMaxTime: '22:00:00',
+            allDaySlot: false,
             dateClick: (info) => {
-                if (!auth.currentUser) return alert("로그인이 필요합니다.");
-                currentDay = info.dateStr;
+                if (!auth.currentUser) return alert("로그인 후 예약 가능합니다.");
+                currentDay = info.dateStr.split('T')[0];
                 document.getElementById('modalDateDisplay').innerText = currentDay + " 예약";
                 modal.style.display = 'flex';
             },
             eventContent: (arg) => {
-                // 시설명에 따른 클래스 부여
                 let cls = "bg-multi";
                 if(arg.event.title.includes("밴드")) cls = "bg-band";
                 else if(arg.event.title.includes("제빵")) cls = "bg-bread";
                 else if(arg.event.title.includes("공작")) cls = "bg-work";
                 else if(arg.event.title.includes("강의")) cls = "bg-study";
-
-                return { html: `<div class="event-chip ${cls}">${arg.event.extendedProps.shortTime} ${arg.event.title}</div>` };
+                
+                // 주 단위 보기(timeGrid)와 월 단위 보기(dayGrid) 대응
+                const timeText = arg.event.extendedProps.shortTime || "";
+                return { html: `<div class="event-chip ${cls} h-full w-full">${timeText} ${arg.event.title}</div>` };
             },
             eventClick: async (info) => {
                 if (confirm('삭제하시겠습니까?')) await deleteDoc(doc(db, "reservations", info.event.id));
             }
         });
         calendar.render();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) document.getElementById('userDisplay').innerText = user.email.split('@')[0] + "님";
+        });
 
         document.getElementById('btnCancel').onclick = () => modal.style.display = 'none';
         document.getElementById('btnConfirm').onclick = async () => {
@@ -156,7 +173,16 @@
             const events = [];
             snap.forEach(doc => {
                 const d = doc.data();
-                events.push({ id: doc.id, title: d.room, start: d.time, extendedProps: { shortTime: d.shortTime } });
+                // 주 단위 보기 대응을 위해 end 시간(30분 뒤) 자동 계산
+                const startTime = new Date(d.time);
+                const endTime = new Date(startTime.getTime() + 30 * 60000);
+                events.push({ 
+                    id: doc.id, 
+                    title: d.room, 
+                    start: d.time, 
+                    end: endTime.toISOString(),
+                    extendedProps: { shortTime: d.shortTime } 
+                });
             });
             calendar.removeAllEvents();
             calendar.addEventSource(events);
