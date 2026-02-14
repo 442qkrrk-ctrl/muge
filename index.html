@@ -13,10 +13,9 @@
         
         #bookingSection, #userInfo, #adminUserList { display: none; }
         
-        /* 캘린더 스타일 */
         .fc { background: white; padding: 5px; border-radius: 1.25rem; border: 1px solid #e2e8f0; height: auto !important; min-height: 550px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         
-        /* [v5.1] 타이틀 두 줄 배치 */
+        /* [v5.2] 반응형 타이틀 설정 (모바일 기본 2줄) */
         .fc-toolbar-title { 
             display: flex !important; flex-direction: column !important; align-items: center !important; 
             line-height: 1.1 !important; font-size: 0.85rem !important; font-weight: 800; color: #065f46; 
@@ -25,21 +24,24 @@
             content: attr(data-month); font-size: 1.25rem !important; display: block; margin-top: 2px;
         }
 
-        /* 헤더 날짜 및 버튼 최적화 */
-        .fc .fc-col-header-cell-cushion { font-size: 0.8rem !important; font-weight: 600; color: #475569; padding: 4px 0 !important; }
-        .fc .fc-button-group > .fc-prev-button, .fc .fc-button-group > .fc-next-button { padding: 4px 6px !important; font-size: 0.75rem !important; }
-        .fc-today-button { padding: 4px 10px !important; font-size: 0.8rem !important; font-weight: 700 !important; }
-        .fc .fc-timegrid-slot-label-cushion { font-size: 0.7rem !important; }
-
+        /* [v5.2] PC(768px 이상)에서는 다시 1줄로 변경 */
         @media (min-width: 768px) {
             .max-w-md { max-width: 1100px !important; }
-            .fc-toolbar-title { font-size: 1.1rem !important; }
-            .fc-toolbar-title::after { font-size: 2.2rem !important; }
+            .fc-toolbar-title { 
+                flex-direction: row !important; gap: 8px; font-size: 2rem !important; 
+            }
+            .fc-toolbar-title::after {
+                content: attr(data-month); font-size: 2rem !important; margin-top: 0;
+            }
             .fc .fc-col-header-cell-cushion { font-size: 1.1rem !important; }
-            .input-row > * { font-size: 16px !important; padding: 15px !important; }
             #btnSave { font-size: 18px !important; padding: 20px !important; }
         }
 
+        /* 공통 헤더/버튼 스타일 */
+        .fc .fc-col-header-cell-cushion { font-size: 0.8rem !important; font-weight: 600; color: #475569; padding: 4px 0 !important; }
+        .fc .fc-button-group > .fc-prev-button, .fc .fc-button-group > .fc-next-button { padding: 4px 6px !important; font-size: 0.75rem !important; }
+        .fc-today-button { padding: 4px 10px !important; font-size: 0.8rem !important; font-weight: 700 !important; }
+        
         .month-event-box { display: flex; flex-direction: column; width: 100%; padding: 2px 1px; line-height: 1.1; }
         .month-time { font-size: 8px; color: #000 !important; font-weight: 900; opacity: 0.7; }
         .month-room { font-size: 10px; font-weight: 800; color: #000 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -113,7 +115,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 시간 선택 옵션 생성
         const timeSelect = document.getElementById('bookTimeSelect');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
@@ -131,7 +132,7 @@
             dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             displayEventTime: false,
-            // [v5.1] 년/월 분리 로직
+            // [v5.2] 타이틀 분리 로직 (반응형 대응)
             datesSet: function() {
                 const titleEl = document.querySelector('.fc-toolbar-title');
                 if (titleEl) {
@@ -162,7 +163,6 @@
             if (user) {
                 ui.auth.style.display = 'none'; ui.info.style.display = 'block'; ui.book.style.display = 'block';
                 document.getElementById('userDisplay').textContent = user.email.split('@')[0] + "님";
-                
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists() && userDoc.data().isAdmin) {
                     ui.admin.style.display = 'block';
@@ -196,11 +196,9 @@
             const date = document.getElementById('bookDate').value;
             const time = document.getElementById('bookTimeSelect').value;
             if(!date) return alert("날짜 선택!");
-            
             await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time: `${date}T${time}`, shortTime: time });
             const checklist = `[퇴실 체크리스트]\n1. 🔗 악기/도구/케이블 정리\n2. 🗑️ 쓰레기 비우기\n3. 🔥 전열기구 확인\n4. ❄️ 에어컨 끄기\n5. 🔌 전자제품 끄기\n6. ⚡ 멀티탭 끄기\n7. 💡 모든 불 끄기\n8. 🔐 문 잠그고 퇴실`;
             alert("✅ 예약 완료!\n\n" + checklist);
-
             if (confirm("본인에게 확인 메일을 보낼까요?")) {
                 const subject = encodeURIComponent(`[무계] 예약 안내 (${room})`);
                 const body = encodeURIComponent(`안녕하세요. 예약 일정을 확인하세요.\n장소: ${room}\n일시: ${date} ${time}\n\n${checklist}`);
