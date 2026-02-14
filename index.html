@@ -19,11 +19,11 @@
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
 
         /* [v7.2] 터치 및 클릭 최적화 */
-        .fc-timegrid-slot { height: 70px !important; } 
+        .fc-timegrid-slot { height: 70px !important; } /* 칸을 더 키워 터치 미스 방지 */
         
         /* 날짜 헤더 영역 클릭 가능하게 시각적 피드백 */
         .fc-col-header-cell-cushion { width: 100%; padding: 10px 0 !important; display: block !important; cursor: pointer !important; }
-        .fc-highlight { background: rgba(16, 185, 129, 0.2) !important; } 
+        .fc-highlight { background: rgba(16, 185, 129, 0.2) !important; } /* 선택 시 강조 색상 */
 
         /* 시설별 색상 */
         .event-chip { font-size: 10px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; border: none; }
@@ -104,12 +104,13 @@
             height: 'auto',
             slotMinTime: '09:00:00',
             slotMaxTime: '22:00:00',
-            selectable: true, 
+            selectable: true, // [v7.2 핵심] 드래그 및 날짜 선택 활성화
             headerToolbar: {
                 left: 'title',
                 center: '',
                 right: 'prev,next today dayGridMonth,timeGridWeek'
             },
+            // [v7.2 핵심] 선택 이벤트 (날짜 헤더 포함 모든 영역 대응)
             select: function(info) {
                 if (!auth.currentUser) return alert("로그인 필요");
                 
@@ -121,7 +122,7 @@
 
                 document.getElementById('modalDateDisplay').innerText = currentDay + " 예약";
                 modal.style.display = 'flex';
-                calendar.unselect(); 
+                calendar.unselect(); // 선택 하이라이트 해제
             },
             eventContent: (arg) => {
                 let cls = "bg-multi";
