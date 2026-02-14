@@ -10,31 +10,15 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
-
-        /* [v6.7] 헤더 타이틀 왼쪽 정렬 커스텀 */
-        .fc-toolbar {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 0 5px !important;
-        }
-        /* 타이틀을 왼쪽 끝으로 */
-        .fc-toolbar-chunk:nth-child(2) {
-            order: -1 !important; /* 가운데 있던 타이틀을 맨 앞으로 */
-            flex: 1;
-            text-align: left;
-        }
-        /* 이전/다음 버튼 그룹 */
-        .fc-toolbar-chunk:nth-child(1) { display: flex; gap: 2px; }
         
+        /* 헤더 타이틀 중앙 정렬 (가장 안정적) */
         .fc-toolbar-title { 
-            font-size: 1.1rem !important; 
+            font-size: 1.2rem !important; 
             font-weight: 900; 
             color: #1e293b;
-            letter-spacing: -0.5px;
         }
 
-        /* 시설별 색상 및 칩 스타일 */
+        /* 시설별 칩 스타일 */
         .event-chip { font-size: 9px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; border: none; }
         .bg-band { background-color: #10b981 !important; }
         .bg-bread { background-color: #f59e0b !important; }
@@ -42,12 +26,15 @@
         .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
 
-        .fc-button-primary { background-color: #f1f5f9 !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; font-weight: 800 !important; font-size: 11px !important; }
-        .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
+        /* 버튼 디자인 복구 */
+        .fc-button-primary { background-color: #10b981 !important; border: none !important; font-weight: 800 !important; }
+        .fc-button-active { background-color: #059669 !important; }
+
+        #calendar { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 
         @media (max-width: 768px) {
-            .fc-toolbar-title { font-size: 0.9rem !important; }
-            .fc-button { padding: 4px 6px !important; }
+            .fc-toolbar { flex-direction: column; gap: 8px; }
+            .fc-toolbar-title { font-size: 1rem !important; }
         }
 
         #bookingModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
@@ -58,11 +45,11 @@
 
     <div class="max-w-[1100px] mx-auto">
         <header class="flex justify-between items-center py-4 px-2">
-            <h1 class="text-xl font-black text-emerald-800 tracking-tighter">무계마을학교 시설 예약</h1>
+            <h1 class="text-xl font-black text-emerald-800">무계마을학교 시설 예약</h1>
             <button id="btnLogout" class="text-xs font-bold text-red-400">로그아웃</button>
         </header>
 
-        <div id="calendar" class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"></div>
+        <div id="calendar"></div>
 
         <div id="bookingModal">
             <div class="modal-content w-full bg-white max-w-md p-6 rounded-t-3xl md:rounded-3xl">
@@ -119,8 +106,8 @@
             locale: 'ko',
             height: 'auto',
             headerToolbar: {
-                left: 'title', // [v6.7] 타이틀을 왼쪽으로
-                center: 'prev,next today', // 버튼들을 가운데/우측으로 유동적 배치
+                left: 'prev,next today',
+                center: 'title',
                 right: 'dayGridMonth,timeGridWeek'
             },
             dateClick: (info) => {
