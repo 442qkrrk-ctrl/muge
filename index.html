@@ -11,49 +11,29 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
         
-        /* 헤더 스타일 */
-        .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 10px 5px !important; }
+        .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; align-items: center !important; gap: 10px; padding: 12px 5px !important; }
         .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 900; color: #1e293b; }
-        .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; font-size: 11px !important; }
+        .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; font-weight: 800 !important; font-size: 11px !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
 
-        /* [v7.5 핵심] 예약 칩이 칸 전체를 가리지 않도록 너비 조정 */
-        .fc-timegrid-event-harness {
-            max-width: 85% !important; /* 칩의 너비를 85%로 제한하여 옆에 클릭 가능한 틈새 확보 */
-            margin-right: auto !important;
-        }
-        
-        .fc-v-event {
-            border: none !important;
-            background: none !important; /* 기본 배경 제거 */
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.1); /* 살짝 입체감 */
-        }
+        /* v7.2의 핵심: 클릭 감도 및 터치 영역 */
+        .fc-timegrid-slot { height: 70px !important; } 
+        .fc-col-header-cell-cushion { width: 100%; padding: 10px 0 !important; display: block !important; cursor: pointer !important; }
+        .fc-highlight { background: rgba(16, 185, 129, 0.2) !important; } 
 
-        /* 시간 칸 높이 */
-        .fc-timegrid-slot { height: 50px !important; cursor: pointer; } 
-
-        /* 시설별 칩 스타일 */
-        .event-chip { 
-            font-size: 10px; 
-            padding: 4px; 
-            border-radius: 6px; 
-            color: white; 
-            font-weight: 700; 
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
+        /* 시설별 색상 */
+        .event-chip { font-size: 10px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; border: none; }
         .bg-band { background-color: #10b981 !important; }
         .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; }
         .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
 
-        #calendar { background: white; border-radius: 16px; padding: 5px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        #bookingModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
-        @media (max-width: 768px) { #bookingModal { align-items: flex-end; } }
+        #calendar { background: white; border-radius: 16px; padding: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        
+        /* 모달 공통 스타일 */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+        @media (max-width: 768px) { .modal-overlay { align-items: flex-end; } .modal-content { border-radius: 24px 24px 0 0 !important; } }
     </style>
 </head>
 <body class="p-2 md:p-8">
@@ -61,14 +41,29 @@
     <div class="max-w-[1100px] mx-auto">
         <header class="flex justify-between items-center py-4 px-2">
             <h1 class="text-xl font-black text-emerald-800">무계마을학교 시설 예약</h1>
-            <button id="btnLogout" class="text-xs font-bold text-red-400">로그아웃</button>
+            <div class="flex gap-4 items-center">
+                <span id="userStatus" class="text-[10px] font-bold text-slate-400"></span>
+                <button id="btnLogout" class="text-xs font-bold text-red-400">로그아웃</button>
+            </div>
         </header>
 
         <div id="calendar"></div>
 
-        <div id="bookingModal">
-            <div class="modal-content w-full bg-white max-w-md p-6 rounded-t-3xl md:rounded-3xl">
-                <h3 id="modalDateDisplay" class="font-black text-lg mb-4 text-slate-800 text-center">예약 일시</h3>
+        <div id="authModal" class="modal-overlay">
+            <div class="modal-content w-full bg-white max-w-md p-8 rounded-3xl shadow-2xl">
+                <h3 id="authTitle" class="font-black text-2xl mb-6 text-slate-800">환영합니다!</h3>
+                <input type="email" id="email" placeholder="이메일" class="w-full p-4 mb-3 border-2 rounded-2xl outline-none focus:border-emerald-500">
+                <input type="password" id="pw" placeholder="비밀번호" class="w-full p-4 mb-6 border-2 rounded-2xl outline-none focus:border-emerald-500">
+                <div class="flex flex-col gap-3">
+                    <button id="btnLogin" class="w-full py-4 bg-emerald-600 text-white font-black rounded-2xl">로그인</button>
+                    <button id="btnJoin" class="w-full py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl">신규 회원가입</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="bookingModal" class="modal-overlay">
+            <div class="modal-content w-full bg-white max-w-md p-6 rounded-3xl shadow-2xl">
+                <h3 id="modalDateDisplay" class="font-black text-lg mb-4 text-slate-800 text-center">예약 설정</h3>
                 <div class="grid grid-cols-2 gap-3 mb-6">
                     <select id="modalTime" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm"></select>
                     <select id="modalRoom" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm">
@@ -80,8 +75,8 @@
                     </select>
                 </div>
                 <div class="flex gap-2">
-                    <button id="btnCancel" class="flex-1 py-4 text-slate-400 font-bold">닫기</button>
-                    <button id="btnConfirm" class="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl">예약 확정</button>
+                    <button id="closeBooking" class="flex-1 py-4 text-slate-400 font-bold">닫기</button>
+                    <button id="btnConfirm" class="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl">예약 완료</button>
                 </div>
             </div>
         </div>
@@ -89,7 +84,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -105,6 +100,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // 시간 옵션 생성
         const modalTime = document.getElementById('modalTime');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
@@ -114,34 +110,48 @@
         }
 
         let currentDay = "";
-        const modal = document.getElementById('bookingModal');
+        const authModal = document.getElementById('authModal');
+        const bookingModal = document.getElementById('bookingModal');
 
+        // 인증 처리
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authModal.style.display = 'none';
+                document.getElementById('userStatus').innerText = user.email.split('@')[0] + "님";
+            } else {
+                authModal.style.display = 'flex';
+                document.getElementById('userStatus').innerText = "";
+            }
+        });
+
+        document.getElementById('btnLogin').onclick = () => {
+            signInWithEmailAndPassword(auth, email.value, pw.value).catch(e => alert("로그인 실패: " + e.message));
+        };
+        document.getElementById('btnJoin').onclick = () => {
+            createUserWithEmailAndPassword(auth, email.value, pw.value).then(() => alert("가입 성공!")).catch(e => alert("가입 실패: " + e.message));
+        };
+        document.getElementById('btnLogout').onclick = () => signOut(auth);
+
+        // 캘린더 설정 (v7.2 로직 유지)
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko',
             height: 'auto',
             slotMinTime: '09:00:00',
             slotMaxTime: '22:00:00',
-            allDaySlot: false,
-            navLinks: true, 
-            navLinkDayClick: function(date) {
-                currentDay = date.toISOString().split('T')[0];
-                document.getElementById('modalDateDisplay').innerText = currentDay + " 예약";
-                modal.style.display = 'flex';
-            },
+            selectable: true, 
             headerToolbar: {
                 left: 'title',
                 center: '',
                 right: 'prev,next today dayGridMonth,timeGridWeek'
             },
-            dateClick: function(info) {
-                if (!auth.currentUser) return alert("로그인 필요");
-                currentDay = info.dateStr.split('T')[0];
-                if (info.dateStr.includes('T')) {
-                    modalTime.value = info.dateStr.split('T')[1].substring(0, 5);
-                }
+            select: function(info) {
+                if (!auth.currentUser) return;
+                currentDay = info.startStr.split('T')[0];
+                if (info.startStr.includes('T')) modalTime.value = info.startStr.split('T')[1].substring(0, 5);
                 document.getElementById('modalDateDisplay').innerText = currentDay + " 예약";
-                modal.style.display = 'flex';
+                bookingModal.style.display = 'flex';
+                calendar.unselect(); 
             },
             eventContent: (arg) => {
                 let cls = "bg-multi";
@@ -149,7 +159,7 @@
                 else if(arg.event.title.includes("제빵")) cls = "bg-bread";
                 else if(arg.event.title.includes("공작")) cls = "bg-work";
                 else if(arg.event.title.includes("강의")) cls = "bg-study";
-                return { html: `<div class="event-chip ${cls}">${arg.event.title}</div>` };
+                return { html: `<div class="event-chip ${cls}">${arg.event.extendedProps.shortTime} ${arg.event.title}</div>` };
             },
             eventClick: async (info) => {
                 if (confirm('삭제하시겠습니까?')) await deleteDoc(doc(db, "reservations", info.event.id));
@@ -157,7 +167,7 @@
         });
         calendar.render();
 
-        document.getElementById('btnCancel').onclick = () => modal.style.display = 'none';
+        document.getElementById('closeBooking').onclick = () => bookingModal.style.display = 'none';
         document.getElementById('btnConfirm').onclick = async () => {
             await addDoc(collection(db, "reservations"), {
                 user: auth.currentUser.email,
@@ -165,16 +175,15 @@
                 time: `${currentDay}T${modalTime.value}`,
                 shortTime: modalTime.value
             });
-            modal.style.display = 'none';
+            bookingModal.style.display = 'none';
         };
 
-        document.getElementById('btnLogout').onclick = () => signOut(auth);
         onSnapshot(collection(db, "reservations"), (snap) => {
             const events = [];
             snap.forEach(doc => {
                 const d = doc.data();
                 const startTime = new Date(d.time);
-                const endTime = new Date(startTime.getTime() + 30 * 60000); // 30분 단위 표시
+                const endTime = new Date(startTime.getTime() + 60 * 60000);
                 events.push({ id: doc.id, title: d.room, start: d.time, end: endTime.toISOString(), extendedProps: { shortTime: d.shortTime } });
             });
             calendar.removeAllEvents(); calendar.addEventSource(events);
