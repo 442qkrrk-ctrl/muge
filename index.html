@@ -3,87 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 예약시스템</title>
+    <title>무계행복마을학교</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #fdfbf7; color: #1e293b; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #fdfbf7; -webkit-tap-highlight-color: transparent; }
         
         #bookingSection, #userInfo, #adminUserList { display: none; }
         
-        /* [v5.6] 낭낭한 한 줄 입력창 스타일 */
+        /* [v5.7] 확실한 클릭을 위한 낭낭한 스타일 */
         .input-row-container {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             width: 100%;
-            align-items: center;
+            margin-bottom: 12px;
         }
 
         .big-box {
+            display: block;
+            width: 100%;
+            min-height: 54px; /* 확실한 터치 높이 확보 */
             background: #ffffff;
-            border: 2px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 14px 10px !important;
-            font-size: 14px !important;
+            border: 2px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 15px !important;
             font-weight: 800;
-            outline: none;
-            transition: all 0.2s;
             text-align: center;
-            appearance: none;
+            cursor: pointer;
+            z-index: 10; /* 클릭 우선순위 확보 */
+            position: relative;
         }
 
-        /* 각 요소별 비율 조절 */
-        #displayDate { flex: 2; background: #f8fafc; color: #065f46; border-style: dashed; }
+        /* 날짜/시간/장소 비중 조절 */
+        #displayDate { flex: 1.2; background: #f1f5f9; border-style: dashed; }
         #bookTimeSelect { flex: 1; background: #1e293b; color: white; border-color: #1e293b; }
         #roomName { flex: 1.5; background: #f0fdf4; color: #065f46; border-color: #d1fae5; }
 
-        .big-box:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
-
-        /* 캘린더 타이틀 */
+        /* 캘린더 타이틀 (모바일 2줄) */
         .fc-toolbar-title { display: flex !important; flex-direction: column !important; align-items: center !important; line-height: 1.1 !important; font-size: 0.85rem !important; font-weight: 800; color: #065f46; }
-        .fc-toolbar-title::after { content: attr(data-month); font-size: 1.25rem !important; display: block; margin-top: 2px; }
+        .fc-toolbar-title::after { content: attr(data-month); font-size: 1.25rem !important; display: block; }
 
         @media (min-width: 768px) {
             .max-w-md { max-width: 1100px !important; }
             .fc-toolbar-title { flex-direction: row !important; gap: 8px; font-size: 2rem !important; }
-            .fc-toolbar-title::after { content: attr(data-month); font-size: 2rem !important; margin-top: 0; }
-            .big-box { font-size: 18px !important; padding: 20px !important; }
+            .fc-toolbar-title::after { font-size: 2rem !important; }
+            .big-box { min-height: 70px; font-size: 18px !important; }
         }
 
-        .fc { background: white; padding: 5px; border-radius: 1.25rem; border: 1px solid #e2e8f0; }
-        .month-event-box { display: flex; flex-direction: column; width: 100%; padding: 2px 1px; line-height: 1.1; }
+        /* 캘린더 내부 이벤트 */
+        .month-event-box { display: flex; flex-direction: column; width: 100%; padding: 1px; }
         .month-time { font-size: 8px; font-weight: 900; }
-        .month-room { font-size: 10px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .month-room { font-size: 9px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; }
+        
         .fc-button-primary { background-color: #065f46 !important; border-color: #065f46 !important; }
+        button:active { transform: scale(0.98); }
     </style>
 </head>
-<body class="min-h-screen pb-10">
+<body class="min-h-screen pb-20">
 
-    <div class="max-w-md mx-auto px-3 pt-6 transition-all">
-        <header class="flex justify-between items-center mb-5 px-1">
-            <h1 class="text-xl md:text-3xl font-black text-emerald-700">무계행복마을학교</h1>
+    <div class="max-w-md mx-auto px-3 pt-6">
+        <header class="flex justify-between items-center mb-6 px-1">
+            <h1 class="text-2xl font-black text-emerald-700">무계행복마을학교</h1>
             <div id="userInfo" class="text-right">
-                <span id="userDisplay" class="text-[9px] md:text-sm font-bold block text-slate-400"></span>
-                <button id="btnLogout" class="text-[9px] md:text-sm text-red-400 font-bold">로그아웃</button>
+                <span id="userDisplay" class="text-[10px] font-bold block text-slate-400"></span>
+                <button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button>
             </div>
         </header>
 
         <section id="authForm" class="bg-white p-5 rounded-2xl shadow-sm border mb-4">
             <div class="flex gap-2 mb-2">
-                <input type="email" id="emailInput" placeholder="이메일" class="flex-1 p-3 rounded-xl border text-sm outline-none">
-                <input type="password" id="passwordInput" placeholder="비번" class="flex-1 p-3 rounded-xl border text-sm outline-none">
+                <input type="email" id="emailInput" placeholder="이메일" class="flex-1 p-3 rounded-xl border text-sm">
+                <input type="password" id="passwordInput" placeholder="비번" class="flex-1 p-3 rounded-xl border text-sm">
             </div>
-            <button id="btnLogin" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">로그인</button>
+            <button id="btnLogin" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl">로그인 / 시작하기</button>
         </section>
 
-        <section id="bookingSection" class="bg-white p-4 rounded-2xl shadow-lg border-b-4 border-b-emerald-500 mb-6">
+        <section id="bookingSection" class="bg-white p-4 rounded-2xl shadow-xl border-t-4 border-t-emerald-500 mb-6">
             <div class="input-row-container">
-                <input type="text" id="displayDate" class="big-box" readonly placeholder="날짜 선택">
-                
+                <input type="text" id="displayDate" class="big-box" readonly placeholder="날짜선택">
                 <select id="bookTimeSelect" class="big-box"></select>
-                
                 <select id="roomName" class="big-box">
                     <option value="밴드실">🎸 밴드실</option>
                     <option value="제빵실">🍞 제빵실</option>
@@ -92,21 +92,21 @@
                     <option value="다목적실">✨ 다목적실</option>
                 </select>
             </div>
-            <button id="btnSave" class="w-full mt-4 bg-emerald-600 text-white font-black py-4 rounded-xl shadow-md text-base">예약 확정</button>
+            <button id="btnSave" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg">예약 확정하기</button>
         </section>
 
-        <div id="calendar" class="mb-10"></div>
+        <div id="calendar"></div>
 
-        <div id="adminUserList" class="bg-white p-5 rounded-2xl shadow-sm border border-orange-200">
-            <h3 class="font-black text-orange-600 mb-3 flex items-center gap-2 text-sm">📢 실시간 가입자 명단</h3>
-            <ul id="userUl" class="text-[11px] md:text-sm space-y-2 divide-y divide-orange-50"></ul>
+        <div id="adminUserList" class="mt-8 bg-white p-5 rounded-2xl shadow-sm border border-orange-200">
+            <h3 class="font-black text-orange-600 mb-3 text-sm">📢 가입자 현황</h3>
+            <ul id="userUl" class="text-[11px] space-y-2"></ul>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, onSnapshot, addDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8",
@@ -121,7 +121,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 시간 옵션
         const timeSelect = document.getElementById('bookTimeSelect');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
@@ -140,9 +139,9 @@
             dateClick: function(info) {
                 selectedFullDate = info.dateStr; 
                 const parts = selectedFullDate.split('-');
-                // 한 줄 레이아웃을 위해 날짜 형식을 간결하게 "02.14" 식으로 표시
                 document.getElementById('displayDate').value = `${parts[1]}.${parts[2]}`;
-                document.getElementById('bookingSection').scrollIntoView({ behavior: 'smooth' });
+                // 예약바가 위쪽에 있으므로 클릭 시 상단으로 이동
+                window.scrollTo({ top: 100, behavior: 'smooth' });
             },
             datesSet: function() {
                 const titleEl = document.querySelector('.fc-toolbar-title');
@@ -154,7 +153,7 @@
             eventContent: function(arg) {
                 const room = arg.event.title;
                 const timeStr = arg.event.extendedProps.shortTime;
-                return { html: arg.view.type === 'dayGridMonth' ? `<div class="month-event-box"><span class="month-time">${timeStr}</span><span class="month-room">${room}</span></div>` : `<div class="p-1"><b class="text-[10px] md:text-sm text-white">${room}</b></div>` };
+                return { html: `<div class="month-event-box"><span class="month-time">${timeStr}</span><span class="month-room">${room}</span></div>` };
             },
             eventClick: async function(info) { if (confirm(`삭제하시겠습니까?`)) await deleteDoc(doc(db, "reservations", info.event.id)); }
         });
@@ -172,8 +171,8 @@
                         const userUl = document.getElementById('userUl'); userUl.innerHTML = "";
                         snap.forEach(doc => {
                             const d = doc.data();
-                            const li = document.createElement('li'); li.className = "flex justify-between py-2 text-slate-600";
-                            li.innerHTML = `<span>👤 ${d.email}</span><span class="text-[9px] text-slate-400">${d.joinedAt?.split('T')[0] || '이전'}</span>`;
+                            const li = document.createElement('li'); li.className = "flex justify-between py-1 border-b border-slate-50";
+                            li.innerHTML = `<span>👤 ${d.email}</span><span class="text-[9px] text-slate-400">${d.joinedAt?.split('T')[0] || ''}</span>`;
                             userUl.appendChild(li);
                         });
                     });
@@ -181,16 +180,15 @@
             } else { ui.auth.style.display = 'block'; ui.info.style.display = 'none'; ui.book.style.display = 'none'; ui.admin.style.display = 'none'; }
         });
 
-        document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value).catch(e => alert("실패!"));
+        document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value).catch(e => alert("로그인 정보를 확인하세요!"));
         document.getElementById('btnLogout').onclick = () => signOut(auth);
 
         document.getElementById('btnSave').onclick = async () => {
             const room = document.getElementById('roomName').value;
             const time = timeSelect.value;
-            if(!selectedFullDate) return alert("달력에서 날짜를 먼저 클릭해주세요!");
-            
+            if(!selectedFullDate) return alert("먼저 달력에서 날짜를 클릭해주세요!");
             await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time: `${selectedFullDate}T${time}`, shortTime: time });
-            alert(`✅ 예약 완료: ${selectedFullDate} ${time}`);
+            alert(`✅ 예약 완료!`);
         };
 
         onSnapshot(collection(db, "reservations"), (snap) => {
