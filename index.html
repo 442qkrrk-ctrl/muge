@@ -10,17 +10,14 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
-        
-        /* 캘린더 커스텀 */
         .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 12px 5px !important; }
         .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 900; color: #1e293b; }
-        .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; font-weight: 800 !important; font-size: 11px !important; }
+        .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; font-weight: 800 !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
         .fc-timegrid-slot { height: 70px !important; } 
         .fc-col-header-cell-cushion { width: 100%; padding: 10px 0 !important; display: block !important; cursor: pointer !important; text-decoration: none !important; color: inherit !important; }
-
-        /* 시설별 칩 스타일 */
-        .event-chip { font-size: 10px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; }
+        
+        .event-chip { font-size: 10px; padding: 4px; border-radius: 4px; color: white; font-weight: 700; }
         .bg-band { background-color: #10b981 !important; }
         .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; }
@@ -47,13 +44,10 @@
 
         <div id="authModal" class="modal-overlay">
             <div class="modal-content w-full bg-white max-w-md p-8 rounded-3xl shadow-2xl text-center">
-                <h3 class="font-black text-2xl mb-6 text-slate-800">로그인</h3>
-                <button id="btnGoogle" class="w-full py-4 mb-6 bg-white border-2 border-slate-100 flex items-center justify-center gap-3 rounded-2xl font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm">
+                <h3 class="font-black text-2xl mb-6">로그인</h3>
+                <button id="btnGoogle" class="w-full py-4 mb-4 bg-white border-2 flex items-center justify-center gap-3 rounded-2xl font-bold shadow-sm">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> 구글 로그인
                 </button>
-                <div class="flex items-center gap-2 mb-6 text-slate-300">
-                    <hr class="flex-1"> <span class="text-[10px] font-bold">OR EMAIL</span> <hr class="flex-1">
-                </div>
                 <input type="email" id="email" placeholder="이메일" class="w-full p-4 mb-3 border-2 rounded-2xl bg-slate-50">
                 <input type="password" id="pw" placeholder="비밀번호" class="w-full p-4 mb-6 border-2 rounded-2xl bg-slate-50">
                 <div class="flex gap-2">
@@ -65,7 +59,7 @@
 
         <div id="bookingModal" class="modal-overlay">
             <div class="modal-content w-full bg-white max-w-md p-6 rounded-3xl shadow-2xl">
-                <h3 id="modalDateDisplay" class="font-black text-lg mb-4 text-slate-800 text-center">예약 설정</h3>
+                <h3 id="modalDateDisplay" class="font-black text-lg mb-4 text-center">예약 설정</h3>
                 <div class="grid grid-cols-2 gap-3 mb-6">
                     <select id="modalTime" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm"></select>
                     <select id="modalRoom" class="p-4 border rounded-xl font-bold bg-slate-50 text-sm">
@@ -87,7 +81,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8",
@@ -154,28 +148,37 @@
 
         document.getElementById('closeBooking').onclick = () => bookingModal.style.display = 'none';
 
-        // [v7.9 핵심: 중복 검사 로직]
+        // [v8.0 핵심: 시간 구간 중복 체크]
         document.getElementById('btnConfirm').onclick = async () => {
             const selectedRoom = document.getElementById('modalRoom').value;
-            const selectedTime = `${currentDay}T${modalTime.value}`;
+            const newStart = new Date(`${currentDay}T${modalTime.value}:00`);
+            const newEnd = new Date(newStart.getTime() + 60 * 60000); // 기본 1시간 예약
 
-            // 동일 시설, 동일 시간대 예약 존재 여부 확인
-            const q = query(collection(db, "reservations"), 
-                        where("room", "==", selectedRoom), 
-                        where("time", "==", selectedTime));
-            
+            // 1. 해당 실의 모든 예약을 가져옴 (날짜 기반 쿼리로 성능 최적화 가능)
+            const q = query(collection(db, "reservations"), where("room", "==", selectedRoom));
             const querySnapshot = await getDocs(q);
             
-            if (!querySnapshot.empty) {
-                alert(`⚠️ 이미 [${selectedRoom}]의 해당 시간대에 예약이 있습니다.\n다른 시간이나 시설을 선택해주세요.`);
-                return; // 함수 종료 (예약 방지)
+            let isOverlap = false;
+            querySnapshot.forEach((doc) => {
+                const existing = doc.data();
+                const exStart = new Date(existing.time);
+                const exEnd = new Date(exStart.getTime() + 60 * 60000);
+
+                // 2. 시간 구간이 겹치는지 체크 (새 시작이 기존 종료보다 빠르고, 새 종료가 기존 시작보다 늦을 때)
+                if (newStart < exEnd && newEnd > exStart) {
+                    isOverlap = true;
+                }
+            });
+
+            if (isOverlap) {
+                alert(`⚠️ 선택하신 시간대 전후로 [${selectedRoom}]에 이미 예약이 있습니다.\n시간을 조정해주세요.`);
+                return;
             }
 
-            // 중복이 없을 경우에만 예약 추가
             await addDoc(collection(db, "reservations"), {
                 user: auth.currentUser.email,
                 room: selectedRoom,
-                time: selectedTime,
+                time: `${currentDay}T${modalTime.value}`,
                 shortTime: modalTime.value
             });
             bookingModal.style.display = 'none';
@@ -185,9 +188,9 @@
             const events = [];
             snap.forEach(doc => {
                 const d = doc.data();
-                const startTime = new Date(d.time);
-                const endTime = new Date(startTime.getTime() + 60 * 60000);
-                events.push({ id: doc.id, title: d.room, start: d.time, end: endTime.toISOString(), extendedProps: { shortTime: d.shortTime } });
+                const s = new Date(d.time);
+                const e = new Date(s.getTime() + 60 * 60000);
+                events.push({ id: doc.id, title: d.room, start: d.time, end: e.toISOString(), extendedProps: { shortTime: d.shortTime } });
             });
             calendar.removeAllEvents(); calendar.addEventSource(events);
         });
