@@ -9,89 +9,73 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
         
-        /* [v6.3] 모바일 잘림 방지 스타일 */
+        /* [v6.4] 모바일 강제 압축 레이아웃 */
         #calendar {
-            max-width: 100%;
+            max-width: 100% !important;
             margin: 0 auto;
-            font-size: 12px; /* 모바일에서 기본 글자 크기 축소 */
         }
 
-        /* 캘린더 헤더(월 표시) 크기 조정 */
-        .fc-toolbar {
-            flex-direction: row !important;
-            gap: 5px;
-            margin-bottom: 1rem !important;
-        }
-        .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 900; }
-        .fc-button { padding: 4px 8px !important; font-size: 12px !important; }
+        /* 캘린더 내부 높이 강제 조정 */
+        .fc .fc-view-harness { height: auto !important; min-height: 350px !important; }
+        .fc .fc-daygrid-day-frame { min-height: 50px !important; } /* 칸 높이 축소 */
+        .fc-scroller { overflow: hidden !important; } /* 스크롤바 제거 */
 
-        /* 팝업 모달 최적화 */
-        #bookingModal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            padding: 15px;
-        }
-        .modal-content {
-            background: white;
-            width: 100%;
-            max-width: 400px;
-            border-radius: 20px;
-            overflow: hidden;
-            animation: modalPop 0.3s ease-out;
-        }
-        @keyframes modalPop { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        /* 날짜 숫자 크기 조절 */
+        .fc-daygrid-day-number { font-size: 11px !important; padding: 2px !important; }
+        .fc-col-header-cell-cushion { font-size: 12px !important; padding: 5px 0 !important; }
 
-        /* 이벤트 칩 모바일 대응 */
+        /* 이벤트 칩을 점(Dot)이나 아주 작은 바(Bar)로 변경 */
         .event-chip {
-            font-size: 9px !important;
-            padding: 1px 3px !important;
+            font-size: 8px !important;
+            padding: 0px 2px !important;
             margin: 1px 0 !important;
-            border-radius: 3px;
-            line-height: 1.2;
+            border-radius: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: block;
         }
 
-        @media (min-width: 768px) {
-            #calendar { font-size: 15px; }
-            .fc-toolbar-title { font-size: 1.8rem !important; }
-            .event-chip { font-size: 11px !important; }
+        /* 팝업 모달 하단 고정 (모바일에서 더 편리함) */
+        @media (max-width: 768px) {
+            #bookingModal { align-items: flex-end; padding: 0; }
+            .modal-content { border-radius: 24px 24px 0 0; max-width: 100%; animation: slideUp 0.3s ease-out; }
+            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+            .fc-toolbar-title { font-size: 1rem !important; }
         }
+
+        #bookingModal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; }
     </style>
 </head>
-<body class="p-2 md:p-8">
+<body class="p-0 md:p-8">
 
-    <div class="max-w-[1000px] mx-auto">
-        <header class="flex justify-between items-center py-4 px-2">
-            <h1 class="text-xl md:text-2xl font-black text-emerald-700">무계마을학교 🏫</h1>
+    <div class="max-w-[1000px] mx-auto px-2">
+        <header class="flex justify-between items-center py-4">
+            <h1 class="text-xl font-black text-emerald-700">무계마을학교</h1>
             <button id="btnLogout" class="text-xs font-bold text-red-400">로그아웃</button>
         </header>
 
-        <div id="calendar" class="bg-white p-2 md:p-4 rounded-2xl shadow-sm"></div>
+        <div id="calendar" class="bg-white rounded-xl shadow-sm border border-slate-100"></div>
 
         <div id="bookingModal">
-            <div class="modal-content">
-                <div class="bg-emerald-600 p-5 text-center text-white">
-                    <h3 class="font-black text-lg">📝 예약하기</h3>
-                    <p id="modalDateDisplay" class="text-xs opacity-90"></p>
-                </div>
+            <div class="modal-content w-full bg-white">
                 <div class="p-6 space-y-4">
-                    <select id="modalTime" class="w-full p-4 border-2 border-slate-100 rounded-xl font-bold bg-slate-50"></select>
-                    <select id="modalRoom" class="w-full p-4 border-2 border-slate-100 rounded-xl font-bold bg-slate-50">
-                        <option value="밴드실">🎸 밴드실</option>
-                        <option value="제빵실">🍞 제빵실</option>
-                        <option value="공작실">🔨 공작실</option>
-                        <option value="강의실">📖 강의실</option>
-                        <option value="다목적실">✨ 다목적실</option>
-                    </select>
-                    <div class="flex gap-2 pt-2">
+                    <h3 id="modalDateDisplay" class="font-black text-lg text-emerald-800">날짜 선택</h3>
+                    <div class="flex gap-2">
+                        <select id="modalTime" class="flex-1 p-4 border rounded-xl font-bold bg-slate-50"></select>
+                        <select id="modalRoom" class="flex-1 p-4 border rounded-xl font-bold bg-slate-50">
+                            <option value="밴드실">🎸 밴드실</option>
+                            <option value="제빵실">🍞 제빵실</option>
+                            <option value="공작실">🔨 공작실</option>
+                            <option value="강의실">📖 강의실</option>
+                            <option value="다목적실">✨ 다목적실</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-3">
                         <button id="btnCancel" class="flex-1 py-4 text-slate-400 font-bold">닫기</button>
-                        <button id="btnConfirm" class="flex-2 py-4 bg-emerald-600 text-white font-black rounded-xl w-full shadow-lg">예약 완료</button>
+                        <button id="btnConfirm" class="flex-[2] py-4 bg-emerald-600 text-white font-black rounded-xl">예약 확정</button>
                     </div>
                 </div>
             </div>
@@ -116,7 +100,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // 시간 리스트 생성
         const modalTime = document.getElementById('modalTime');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
@@ -131,25 +114,24 @@
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth',
             locale: 'ko',
-            height: 'auto', // [v6.3 핵심] 높이 자동 조절로 잘림 방지
-            aspectRatio: 1.35,
+            height: 'auto', 
+            contentHeight: 'auto',
+            expandRows: false, // 행이 억지로 늘어나는 것 방지
             headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
             dateClick: function(info) {
-                if (!auth.currentUser) return alert("로그인 후 이용 가능합니다!");
+                if (!auth.currentUser) return alert("로그인 해주세요!");
                 currentDay = info.dateStr;
                 document.getElementById('modalDateDisplay').innerText = currentDay + " 예약";
                 modal.style.display = 'flex';
             },
             eventContent: function(arg) {
-                return { html: `<div class="event-chip bg-emerald-500 text-white truncate">${arg.event.extendedProps.shortTime} ${arg.event.title}</div>` };
+                return { html: `<div class="event-chip bg-emerald-600 text-white">${arg.event.extendedProps.shortTime}</div>` };
             },
             eventClick: async function(info) {
-                if (confirm('삭제하시겠습니까?')) await deleteDoc(doc(db, "reservations", info.event.id));
+                if (confirm('삭제할까요?')) await deleteDoc(doc(db, "reservations", info.event.id));
             }
         });
         calendar.render();
-
-        onAuthStateChanged(auth, (user) => { if (!user) document.getElementById('btnLogout').style.display='none'; });
 
         document.getElementById('btnCancel').onclick = () => modal.style.display = 'none';
         document.getElementById('btnConfirm').onclick = async () => {
@@ -160,11 +142,9 @@
                 shortTime: modalTime.value
             });
             modal.style.display = 'none';
-            alert("✅ 예약 성공!");
         };
 
         document.getElementById('btnLogout').onclick = () => signOut(auth);
-
         onSnapshot(collection(db, "reservations"), (snap) => {
             const events = [];
             snap.forEach(doc => {
