@@ -16,29 +16,36 @@
         /* 캘린더 스타일 */
         .fc { background: white; padding: 5px; border-radius: 1.25rem; border: 1px solid #e2e8f0; height: auto !important; min-height: 550px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         
-        /* 헤더 및 버튼 크기 최적화 (v4.7) */
+        /* [v5.1] 타이틀 두 줄 배치 */
+        .fc-toolbar-title { 
+            display: flex !important; flex-direction: column !important; align-items: center !important; 
+            line-height: 1.1 !important; font-size: 0.85rem !important; font-weight: 800; color: #065f46; 
+        }
+        .fc-toolbar-title::after {
+            content: attr(data-month); font-size: 1.25rem !important; display: block; margin-top: 2px;
+        }
+
+        /* 헤더 날짜 및 버튼 최적화 */
         .fc .fc-col-header-cell-cushion { font-size: 0.8rem !important; font-weight: 600; color: #475569; padding: 4px 0 !important; }
         .fc .fc-button-group > .fc-prev-button, .fc .fc-button-group > .fc-next-button { padding: 4px 6px !important; font-size: 0.75rem !important; }
         .fc-today-button { padding: 4px 10px !important; font-size: 0.8rem !important; font-weight: 700 !important; }
-        .fc .fc-timegrid-slot-label-cushion, .fc-timegrid-axis-cushion { font-size: 0.7rem !important; font-weight: 500; color: #64748b; }
+        .fc .fc-timegrid-slot-label-cushion { font-size: 0.7rem !important; }
 
         @media (min-width: 768px) {
             .max-w-md { max-width: 1100px !important; }
-            .fc-toolbar-title { font-size: 2.2rem !important; }
+            .fc-toolbar-title { font-size: 1.1rem !important; }
+            .fc-toolbar-title::after { font-size: 2.2rem !important; }
             .fc .fc-col-header-cell-cushion { font-size: 1.1rem !important; }
             .input-row > * { font-size: 16px !important; padding: 15px !important; }
             #btnSave { font-size: 18px !important; padding: 20px !important; }
-            .fc .fc-button { font-size: 1rem !important; padding: 8px 16px !important; }
         }
 
-        .fc-toolbar-title { font-size: 1.05rem !important; font-weight: 800; color: #065f46; margin: 0 4px !important; }
         .month-event-box { display: flex; flex-direction: column; width: 100%; padding: 2px 1px; line-height: 1.1; }
         .month-time { font-size: 8px; color: #000 !important; font-weight: 900; opacity: 0.7; }
         .month-room { font-size: 10px; font-weight: 800; color: #000 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
         .input-row { display: flex; gap: 4px; align-items: center; }
         .input-row > * { flex: 1; min-width: 0; font-size: 13px !important; padding: 10px 4px !important; border-radius: 8px !important; border: 1px solid #e2e8f0; outline: none; }
-        
         .fc-button-primary { background-color: #065f46 !important; border-color: #065f46 !important; }
         button:active { scale: 0.96; transition: 0.1s; }
     </style>
@@ -56,12 +63,12 @@
 
         <section id="authForm" class="bg-white p-5 md:p-8 rounded-2xl shadow-sm border mb-4">
             <div class="flex flex-col md:flex-row gap-2 mb-2">
-                <input type="email" id="emailInput" placeholder="이메일" class="flex-1 px-3 py-2 md:py-4 rounded-lg border outline-none">
-                <input type="password" id="passwordInput" placeholder="비번" class="flex-1 px-3 py-2 md:py-4 rounded-lg border outline-none">
+                <input type="email" id="emailInput" placeholder="이메일" class="flex-1 px-3 py-2 md:py-4 rounded-lg border outline-none text-sm">
+                <input type="password" id="passwordInput" placeholder="비번" class="flex-1 px-3 py-2 md:py-4 rounded-lg border outline-none text-sm">
             </div>
             <div class="flex gap-2">
-                <button id="btnLogin" class="flex-1 bg-emerald-600 text-white font-bold py-2 md:py-4 rounded-lg">로그인</button>
-                <button id="btnSignup" class="flex-1 bg-slate-100 text-slate-500 py-2 md:py-4 rounded-lg">가입</button>
+                <button id="btnLogin" class="flex-1 bg-emerald-600 text-white font-bold py-2 md:py-4 rounded-lg text-sm">로그인</button>
+                <button id="btnSignup" class="flex-1 bg-slate-100 text-slate-500 py-2 md:py-4 rounded-lg text-sm">가입</button>
             </div>
         </section>
 
@@ -77,16 +84,14 @@
                 <input type="date" id="bookDate" class="border outline-none">
                 <select id="bookTimeSelect" class="border outline-none"></select>
             </div>
-            <button id="btnSave" class="w-full bg-slate-800 text-white font-black py-3 md:py-5 rounded-xl shadow-lg">예약 확정하기</button>
+            <button id="btnSave" class="w-full bg-slate-800 text-white font-black py-3 md:py-5 rounded-xl shadow-lg text-sm md:text-lg">예약 확정하기</button>
         </section>
 
         <div id="calendar"></div>
 
         <div id="adminUserList" class="mt-8 bg-white p-5 rounded-2xl shadow-sm border border-orange-200">
-            <h3 class="font-black text-orange-600 mb-3 flex items-center gap-2">
-                <span>📢</span> 실시간 가입자 명단
-            </h3>
-            <ul id="userUl" class="text-sm space-y-2 divide-y divide-orange-50"></ul>
+            <h3 class="font-black text-orange-600 mb-3 flex items-center gap-2 text-sm">📢 실시간 가입자 명단</h3>
+            <ul id="userUl" class="text-[11px] md:text-sm space-y-2 divide-y divide-orange-50"></ul>
         </div>
     </div>
 
@@ -126,6 +131,17 @@
             dayHeaderFormat: { month: 'numeric', day: 'numeric', weekday: 'short' },
             headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
             displayEventTime: false,
+            // [v5.1] 년/월 분리 로직
+            datesSet: function() {
+                const titleEl = document.querySelector('.fc-toolbar-title');
+                if (titleEl) {
+                    const parts = calendar.view.title.split(' ');
+                    if(parts.length >= 2) {
+                        titleEl.innerText = parts[0]; 
+                        titleEl.setAttribute('data-month', parts[1]);
+                    }
+                }
+            },
             eventContent: function(arg) {
                 const room = arg.event.title;
                 const timeStr = arg.event.extendedProps.shortTime;
@@ -141,72 +157,54 @@
         });
         calendar.render();
 
-        // 관리자용 명단 로드
-        function loadUserList() {
-            onSnapshot(collection(db, "users"), (snap) => {
-                const userUl = document.getElementById('userUl');
-                userUl.innerHTML = "";
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const li = document.createElement('li');
-                    li.className = "flex justify-between py-2 text-slate-600";
-                    li.innerHTML = `<span>👤 ${d.email}</span><span class="text-[10px] text-slate-400">${d.joinedAt?.split('T')[0] || '이전가입'}</span>`;
-                    userUl.appendChild(li);
-                });
-            });
-        }
-
         onAuthStateChanged(auth, async (user) => {
             const ui = { auth: document.getElementById('authForm'), info: document.getElementById('userInfo'), book: document.getElementById('bookingSection'), admin: document.getElementById('adminUserList') };
             if (user) {
                 ui.auth.style.display = 'none'; ui.info.style.display = 'block'; ui.book.style.display = 'block';
                 document.getElementById('userDisplay').textContent = user.email.split('@')[0] + "님";
                 
-                // 관리자 체크
                 const userDoc = await getDoc(doc(db, "users", user.uid));
                 if (userDoc.exists() && userDoc.data().isAdmin) {
                     ui.admin.style.display = 'block';
-                    loadUserList();
+                    onSnapshot(collection(db, "users"), (snap) => {
+                        const userUl = document.getElementById('userUl');
+                        userUl.innerHTML = "";
+                        snap.forEach(doc => {
+                            const d = doc.data();
+                            const li = document.createElement('li');
+                            li.className = "flex justify-between py-2 text-slate-600";
+                            li.innerHTML = `<span>👤 ${d.email}</span><span class="text-[9px] text-slate-400">${d.joinedAt?.split('T')[0] || '이전가입'}</span>`;
+                            userUl.appendChild(li);
+                        });
+                    });
                 }
-            } else { 
-                ui.auth.style.display = 'block'; ui.info.style.display = 'none'; ui.book.style.display = 'none'; ui.admin.style.display = 'none';
-            }
+            } else { ui.auth.style.display = 'block'; ui.info.style.display = 'none'; ui.book.style.display = 'none'; ui.admin.style.display = 'none'; }
         });
 
         document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value).catch(e => alert("로그인 실패!"));
-        
         document.getElementById('btnSignup').onclick = async () => {
             try {
                 const u = await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
-                await setDoc(doc(db, "users", u.user.uid), { 
-                    email: emailInput.value, 
-                    isAdmin: false,
-                    joinedAt: new Date().toISOString()
-                });
+                await setDoc(doc(db, "users", u.user.uid), { email: emailInput.value, isAdmin: false, joinedAt: new Date().toISOString() });
                 alert("가입 성공!");
             } catch(e) { alert(e.message); }
         };
-
         document.getElementById('btnLogout').onclick = () => signOut(auth);
 
         document.getElementById('btnSave').onclick = async () => {
             const room = document.getElementById('roomName').value;
             const date = document.getElementById('bookDate').value;
             const time = document.getElementById('bookTimeSelect').value;
-            const userEmail = auth.currentUser.email;
-
-            if(!date) return alert("날짜를 선택하세요!");
+            if(!date) return alert("날짜 선택!");
             
-            await addDoc(collection(db, "reservations"), { user: userEmail, room, time: `${date}T${time}`, shortTime: time });
-            
-            const checklist = `[퇴실 시 필수 체크리스트]\n1. 🔗 악기/도구 정리, 케이블 정리\n2. 🗑️ 쓰레기 버리기\n3. 🔥 전열기구 확인\n4. ❄️ 에어컨 끄기\n5. 🔌 전자제품(PC, 앰프 등) 끄기\n6. ⚡ 멀티탭 스위치 끄기\n7. 💡 모든 불 끄기\n8. 🔐 문 잠그고 퇴실`;
+            await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, time: `${date}T${time}`, shortTime: time });
+            const checklist = `[퇴실 체크리스트]\n1. 🔗 악기/도구/케이블 정리\n2. 🗑️ 쓰레기 비우기\n3. 🔥 전열기구 확인\n4. ❄️ 에어컨 끄기\n5. 🔌 전자제품 끄기\n6. ⚡ 멀티탭 끄기\n7. 💡 모든 불 끄기\n8. 🔐 문 잠그고 퇴실`;
+            alert("✅ 예약 완료!\n\n" + checklist);
 
-            alert("✅ 예약이 완료되었습니다!\n\n" + checklist);
-
-            if (confirm("본인에게 확인 메일을 전송하시겠습니까?")) {
-                const subject = encodeURIComponent(`[무계행복마을학교] 예약 안내 (${room})`);
-                const body = encodeURIComponent(`안녕하세요.\n예약하신 일정을 확인해 주세요.\n- 장소: ${room}\n- 일시: ${date} ${time}\n\n${checklist}`);
-                window.location.href = `mailto:?to=${userEmail}&subject=${subject}&body=${body}`;
+            if (confirm("본인에게 확인 메일을 보낼까요?")) {
+                const subject = encodeURIComponent(`[무계] 예약 안내 (${room})`);
+                const body = encodeURIComponent(`안녕하세요. 예약 일정을 확인하세요.\n장소: ${room}\n일시: ${date} ${time}\n\n${checklist}`);
+                window.location.href = `mailto:?to=${auth.currentUser.email}&subject=${subject}&body=${body}`;
             }
         };
 
