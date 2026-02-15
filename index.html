@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v9.1)</title>
+    <title>무계행복마을학교 시설 예약 (v9.4)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -33,7 +33,7 @@
 
     <div class="max-w-[1100px] mx-auto">
         <header class="flex justify-between items-center py-4 px-2">
-            <h1 class="text-xl font-black text-emerald-800">무계마을학교 시설 예약 <span class="text-sm font-normal text-slate-400">(v9.1)</span></h1>
+            <h1 class="text-xl font-black text-emerald-800">무계행복마을학교 시설 예약 <span class="text-sm font-normal text-slate-400">(v9.4)</span></h1>
             <div class="flex gap-4 items-center">
                 <span id="userStatus" class="text-[10px] font-bold text-slate-400"></span>
                 <button id="btnLogout" class="text-xs font-bold text-red-400">로그아웃</button>
@@ -97,6 +97,9 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
+        // 관리자 계정 설정
+        const ADMIN_EMAIL = "442qkrrk@gmail.com";
+
         const modalTime = document.getElementById('modalTime');
         for (let h = 9; h <= 21; h++) {
             ['00', '30'].forEach(m => {
@@ -145,7 +148,10 @@
             eventClick: async (info) => { 
                 if (!auth.currentUser) return;
                 const ownerEmail = info.event.extendedProps.user;
-                if (auth.currentUser.email !== ownerEmail) {
+                
+                // [수정된 부분] 본인이거나 관리자(442qkrrk@gmail.com)인 경우 삭제 가능
+                const isAdmin = auth.currentUser.email === ADMIN_EMAIL;
+                if (auth.currentUser.email !== ownerEmail && !isAdmin) {
                     alert("본인의 예약만 삭제할 수 있습니다.");
                     return;
                 }
@@ -162,32 +168,22 @@
             const newStart = new Date(`${currentDay}T${modalTime.value}:00`);
             const newEnd = new Date(newStart.getTime() + 60 * 60000); 
 
+            // 과거 예약 차단 (v9.1 기능 유지)
             if (newStart < new Date()) {
                 alert("❌ 이미 지난 시간에는 예약할 수 없습니다.");
                 return;
             }
 
-            const userQ = query(collection(db, "reservations"), where("user", "==", userEmail));
-            const userSnap = await getDocs(userQ);
-            let todayCount = 0;
-            userSnap.forEach((doc) => {
-                if (doc.data().time.startsWith(currentDay)) { todayCount++; }
-            });
-
-            if (todayCount >= 2) {
-                alert("🚫 공정한 이용을 위해 시설 예약은 하루 최대 2회까지만 가능합니다.");
-                return;
-            }
-
-            const roomQ = query(collection(db, "reservations"), where("room", "==", selectedRoom));
-            const roomSnap = await getDocs(roomQ);
+            const q = query(collection(db, "reservations"), where("room", "==", selectedRoom));
+            const querySnapshot = await getDocs(q);
+            
             let isOverlap = false;
-            roomSnap.forEach((doc) => {
+            querySnapshot.forEach((doc) => {
                 const existing = doc.data();
                 if (existing.time.startsWith(currentDay)) {
                     const exStart = new Date(existing.time);
                     const exEnd = new Date(exStart.getTime() + 60 * 60000);
-                    if (newStart < exEnd && newEnd > exStart) { isOverlap = true; }
+                    if (newStart < exEnd && newEnd > exStart) isOverlap = true;
                 }
             });
 
@@ -196,17 +192,13 @@
                 return;
             }
 
-            try {
-                await addDoc(collection(db, "reservations"), {
-                    user: userEmail,
-                    room: selectedRoom,
-                    time: `${currentDay}T${modalTime.value}`,
-                    shortTime: modalTime.value
-                });
-                bookingModal.style.display = 'none';
-            } catch (e) {
-                alert("예약 중 오류가 발생했습니다.");
-            }
+            await addDoc(collection(db, "reservations"), {
+                user: userEmail,
+                room: selectedRoom,
+                time: `${currentDay}T${modalTime.value}`,
+                shortTime: modalTime.value
+            });
+            bookingModal.style.display = 'none';
         };
 
         onSnapshot(collection(db, "reservations"), (snap) => {
@@ -222,7 +214,7 @@
                     end: e.toISOString(), 
                     extendedProps: { 
                         shortTime: d.shortTime,
-                        user: d.user 
+                        user: d.user
                     } 
                 });
             });
