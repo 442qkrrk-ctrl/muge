@@ -185,7 +185,10 @@
             slotMaxTime: '20:00:00',
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek' },
             buttonText: { today: '오늘', month: '월', week: '주' },
-            
+            // [v1.3.3 핵심] 상단 헤더 날짜(2. 15. 일 등) 클릭 시 동작
+            navLinkDayClick: function(date) {
+                openBookingModal(date);
+            },
             // 드래그 시 실행
             select: function(info) { openBookingModal(info); },
             // 단순 클릭 시 실행 (주 보기에서 핵심)
