@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.3.4)</title>
+    <title>무계행복마을학교 시설 예약 (v1.3.5)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; -webkit-tap-highlight-color: transparent; }
-        .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 15px 5px !important; }
+        .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 10px 5px !important; }
         .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 900 !important; color: #065f46; }
         .fc-button { padding: 6px 10px !important; font-size: 0.8rem !important; font-weight: 800 !important; border-radius: 10px !important; }
         .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; }
@@ -19,14 +19,17 @@
         .bg-band { background-color: #10b981 !important; } .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; } .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
-        #calendar { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        #calendar { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 500px; }
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; }
         #toast { visibility: hidden; min-width: 200px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 12px; position: fixed; z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; font-size: 13px; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        /* 날짜 링크 스타일 강제 조정 */
         .fc-col-header-cell-cushion, .fc-daygrid-day-number { cursor: pointer !important; color: #1e293b !important; text-decoration: none !important; font-weight: 700; }
+        /* 모바일 세로 길이 최적화 */
+        @media (max-width: 768px) {
+            #calendar { height: calc(100vh - 120px) !important; }
+        }
     </style>
 </head>
 <body class="p-2 md:p-8">
@@ -35,7 +38,7 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 관리 시스템 (v1.3.4)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 관리 시스템 (v1.3.5)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
@@ -144,13 +147,19 @@
             
             const now = new Date();
             const selectedDate = (typeof dateInput === 'string') ? new Date(dateInput) : dateInput;
-            const dateStr = selectedDate.toISOString().split('T')[0];
-            const timeStr = selectedDate.getHours() !== 0 || selectedDate.getMinutes() !== 0 
+            
+            // [v1.3.5 수정] 시간대 오차 방지를 위해 현지 시간 기준으로 날짜 문자열 추출
+            const year = selectedDate.getFullYear();
+            const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+            const day = String(selectedDate.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+            
+            const timeStr = (selectedDate.getHours() !== 0 || selectedDate.getMinutes() !== 0) 
                             ? selectedDate.toTimeString().substring(0, 5) 
                             : "09:00";
 
             const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const targetOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+            const targetOnly = new Date(year, selectedDate.getMonth(), selectedDate.getDate());
             
             if (targetOnly < todayOnly) {
                 showToast("🚫 지난 날짜는 예약할 수 없습니다.");
@@ -175,11 +184,12 @@
         }
 
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridMonth', // [v1.3.4 수정] 기본 보기를 월(Month)로 설정
+            initialView: 'dayGridMonth',
             locale: 'ko',
             selectable: true,
             allDaySlot: false,
             navLinks: true, 
+            height: 'auto', // [v1.3.5 추가] 콘텐츠에 맞게 높이 조절
             slotMinTime: '09:00:00',
             slotMaxTime: '20:00:00',
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek' },
