@@ -135,7 +135,7 @@
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko', selectable: true, allDaySlot: false,
             slotMinTime: '09:00:00', slotMaxTime: '20:00:00',
@@ -145,6 +145,14 @@
                 if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
                 currentDay = info.startStr.split('T')[0];
                 let startTime = info.startStr.includes('T') ? info.startStr.split('T')[1].substring(0, 5) : "09:00";
+                
+                // [핵심 수정] 창이 열릴 때 체크박스 초기화 및 버튼 비활성화
+                const agreeCheck = document.getElementById('agreeRules');
+                const confirmBtn = document.getElementById('btnConfirm');
+                agreeCheck.checked = false; 
+                confirmBtn.disabled = true;
+                confirmBtn.className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
+
                 document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약`;
                 document.getElementById('modalTime').value = startTime;
                 document.getElementById('bookingModal').style.display = 'flex';
