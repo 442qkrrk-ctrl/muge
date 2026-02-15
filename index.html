@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v9.6)</title>
+    <title>무계행복마을학교 시설 예약 (v9.7)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -17,7 +17,6 @@
         .fc-timegrid-slot { height: 70px !important; } 
         .fc-col-header-cell-cushion { width: 100%; padding: 10px 0 !important; display: block !important; cursor: pointer !important; text-decoration: none !important; color: inherit !important; }
         
-        /* 예약 칩 디자인 */
         .event-chip { font-size: 10px; padding: 4px; border-radius: 4px; color: white; font-weight: 700; line-height: 1.2; }
         .bg-band { background-color: #10b981 !important; }
         .bg-bread { background-color: #f59e0b !important; }
@@ -28,13 +27,19 @@
         #calendar { background: white; border-radius: 16px; padding: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
         @media (max-width: 768px) { .modal-overlay { align-items: flex-end; } .modal-content { border-radius: 24px 24px 0 0 !important; } }
+        
+        /* 토스트 알림 스타일 */
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 12px; padding: 16px; position: fixed; z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
 <body class="p-2 md:p-8">
 
     <div class="max-w-[1100px] mx-auto">
         <header class="flex justify-between items-center py-4 px-2">
-            <h1 class="text-xl font-black text-emerald-800">무계행복마을학교 시설 예약 <span class="text-sm font-normal text-slate-400">(v9.6)</span></h1>
+            <h1 class="text-xl font-black text-emerald-800">무계행복마을학교 시설 예약 <span class="text-sm font-normal text-slate-400">(v9.7)</span></h1>
             <div class="flex gap-4 items-center">
                 <span id="userStatus" class="text-[10px] font-bold text-slate-400"></span>
                 <button id="btnLogout" class="text-xs font-bold text-red-400">로그아웃</button>
@@ -79,6 +84,8 @@
         </div>
     </div>
 
+    <div id="toast"></div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -99,6 +106,14 @@
         const provider = new GoogleAuthProvider();
 
         const ADMIN_EMAIL = "442qkrrk@gmail.com";
+
+        // 토스트 표시 함수
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
 
         const modalTime = document.getElementById('modalTime');
         for (let h = 9; h <= 21; h++) {
@@ -164,10 +179,13 @@
                 const ownerEmail = info.event.extendedProps.user;
                 const isAdmin = auth.currentUser.email === ADMIN_EMAIL;
                 if (auth.currentUser.email !== ownerEmail && !isAdmin) {
-                    alert("본인의 예약만 삭제할 수 있습니다.");
+                    showToast("❌ 본인의 예약만 삭제할 수 있습니다.");
                     return;
                 }
-                if (confirm('예약을 취소하시겠습니까?')) await deleteDoc(doc(db, "reservations", info.event.id)); 
+                if (confirm('예약을 취소하시겠습니까?')) {
+                    await deleteDoc(doc(db, "reservations", info.event.id));
+                    showToast("✅ 예약이 취소되었습니다.");
+                }
             }
         });
         calendar.render();
@@ -175,14 +193,18 @@
         document.getElementById('closeBooking').onclick = () => bookingModal.style.display = 'none';
 
         document.getElementById('btnConfirm').onclick = async () => {
+            const btn = document.getElementById('btnConfirm');
             const selectedRoom = document.getElementById('modalRoom').value;
             const userEmail = auth.currentUser.email;
             const newStart = new Date(`${currentDay}T${modalTime.value}:00`);
 
             if (newStart < new Date()) {
-                alert("❌ 이미 지난 시간에는 예약할 수 없습니다.");
+                showToast("❌ 이미 지난 시간에는 예약할 수 없습니다.");
                 return;
             }
+
+            btn.disabled = true; // 중복 클릭 방지
+            btn.innerText = "처리 중...";
 
             const q = query(collection(db, "reservations"), where("room", "==", selectedRoom));
             const querySnapshot = await getDocs(q);
@@ -197,7 +219,9 @@
             });
 
             if (isOverlap) {
-                alert(`⚠️ 해당 시간에 이미 [${selectedRoom}] 예약이 있습니다.`);
+                showToast(`⚠️ 해당 시간에 이미 [${selectedRoom}] 예약이 있습니다.`);
+                btn.disabled = false;
+                btn.innerText = "예약 확정";
                 return;
             }
 
@@ -209,8 +233,12 @@
                     shortTime: modalTime.value
                 });
                 bookingModal.style.display = 'none';
+                showToast(`🎉 ${selectedRoom} 예약이 완료되었습니다! /n 정리정돈, 전원 차단, 문단속 철저`);
             } catch (e) {
-                alert("예약 오류: " + e.message);
+                showToast("오류가 발생했습니다. 다시 시도해 주세요.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "예약 확정";
             }
         };
 
