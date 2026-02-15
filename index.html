@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.2.7)</title>
+    <title>무계행복마을학교 시설 예약 (v1.3.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -33,7 +33,7 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 관리 시스템 (v1.2.7)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 관리 시스템 (v1.3.0)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
@@ -68,7 +68,7 @@
                 <div class="bg-slate-900 p-5 rounded-2xl mb-6 shadow-xl">
                     <h4 class="text-[12px] font-black text-emerald-400 mb-2">📋 필수 이용 수칙</h4>
                     <ul class="text-[14px] text-slate-300 space-y-1 font-medium mb-4">
-<li>• 퇴실 시 전등 및 냉난방기를 반드시 끕니다.</li>
+                        <li>• 퇴실 시 전등 및 냉난방기를 반드시 끕니다.</li>
                         <li>• 사용한 비품은 제자리에, 쓰레기는 수거합니다.</li>
                         <li>• 시설 훼손 시 원상 복구의 책임이 있습니다.</li>
                     </ul>
@@ -127,7 +127,10 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
-        const ADMIN_EMAIL = ["442qkrrk@gmail.com", "nyamachoma@naver.com"];
+
+        // 관리자 이메일 리스트 (수정됨)
+        const ADMIN_EMAILS = ["442qkrrk@gmail.com", "nyamachoma@naver.com"];
+        const isAdmin = (email) => ADMIN_EMAILS.includes(email);
 
         let currentDay = "";
         const modalTime = document.getElementById('modalTime');
@@ -135,7 +138,7 @@
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko', selectable: true, allDaySlot: false,
             slotMinTime: '09:00:00', slotMaxTime: '20:00:00',
@@ -146,7 +149,7 @@ const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), 
                 currentDay = info.startStr.split('T')[0];
                 let startTime = info.startStr.includes('T') ? info.startStr.split('T')[1].substring(0, 5) : "09:00";
                 
-                // [핵심 수정] 창이 열릴 때 체크박스 초기화 및 버튼 비활성화
+                // [체크박스 강제 초기화 로직]
                 const agreeCheck = document.getElementById('agreeRules');
                 const confirmBtn = document.getElementById('btnConfirm');
                 agreeCheck.checked = false; 
@@ -168,17 +171,16 @@ const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), 
                 return { html: `<div class="event-chip ${cls}"><div>${arg.event.extendedProps.shortTime} ${arg.event.title}</div><div style="font-size:7px; opacity:0.8;">[${nick}]</div></div>` };
             },
             eventClick: async (info) => {
-                if (auth.currentUser && (auth.currentUser.email === info.event.extendedProps.user || auth.currentUser.email === ADMIN_EMAIL)) {
+                // 관리자 이메일 리스트 체크로 수정
+                if (auth.currentUser && (auth.currentUser.email === info.event.extendedProps.user || isAdmin(auth.currentUser.email))) {
                     if (confirm(`취소하시겠습니까?`)) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("✅ 취소됨"); }
                 } else { showToast("본인 예약만 취소 가능합니다."); }
             }
         });
 
-        // 관리자용 전역 함수
         window.admDel = async (id) => { if(confirm('강제 취소하시겠습니까?')) await deleteDoc(doc(db, "reservations", id)); };
         window.admUnblack = async (id) => { if(confirm('해제하시겠습니까?')) await deleteDoc(doc(db, "blacklist", id)); };
 
-        // 관리자 데이터 로드
         function loadAdmin() {
             onSnapshot(collection(db, "reservations"), (snap) => {
                 const list = document.getElementById('adminList');
@@ -233,7 +235,9 @@ const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), 
             document.getElementById('loginInfo').classList.toggle('hidden', !u);
             if(u) {
                 document.getElementById('userNick').innerText = u.email.split('@')[0] + "님";
-                if(u.email === ADMIN_EMAIL) document.getElementById('btnAdminOpen').classList.remove('hidden');
+                // 관리자 체크 로직 업데이트
+                if(isAdmin(u.email)) document.getElementById('btnAdminOpen').classList.remove('hidden');
+                else document.getElementById('btnAdminOpen').classList.add('hidden');
             }
         });
 
