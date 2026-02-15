@@ -156,18 +156,35 @@
 
         document.getElementById('closeBooking').onclick = () => bookingModal.style.display = 'none';
 
+        // [v9.0 예약 정책 추가: 하루 예약 횟수 제한]
         document.getElementById('btnConfirm').onclick = async () => {
             const selectedRoom = document.getElementById('modalRoom').value;
             const newStart = new Date(`${currentDay}T${modalTime.value}:00`);
             const newEnd = new Date(newStart.getTime() + 60 * 60000); 
 
-            // [개선 2: 과거 예약 차단]
+            // 1. 과거 예약 차단 (기존 기능)
             const now = new Date();
             if (newStart < now) {
                 alert("❌ 이미 지난 시간에는 예약할 수 없습니다.");
                 return;
             }
 
+            // 2. [추가] 하루 예약 횟수 제한 로직 (예: 하루 최대 2회)
+            const userEmail = auth.currentUser.email;
+            const dayQuery = query(
+                collection(db, "reservations"), 
+                where("user", "==", userEmail),
+                where("time", ">=", `${currentDay}T00:00`),
+                where("time", "<=", `${currentDay}T23:59`)
+            );
+            
+            const daySnap = await getDocs(dayQuery);
+            if (daySnap.size >= 2) { // 2회 이상이면 차단
+                alert("🚫 공정한 이용을 위해 시설 예약은 하루 최대 2회까지만 가능합니다.");
+                return;
+            }
+
+            // 3. 중복 예약 체크 (기존 기능)
             const q = query(collection(db, "reservations"), where("room", "==", selectedRoom));
             const querySnapshot = await getDocs(q);
             
@@ -187,8 +204,9 @@
                 return;
             }
 
+            // 4. 예약 저장
             await addDoc(collection(db, "reservations"), {
-                user: auth.currentUser.email,
+                user: userEmail,
                 room: selectedRoom,
                 time: `${currentDay}T${modalTime.value}`,
                 shortTime: modalTime.value
