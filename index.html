@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.3.2)</title>
+    <title>무계행복마을학교 시설 예약 (v1.3.3)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -25,6 +25,8 @@
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        /* 날짜 링크 스타일 강제 조정 */
+        .fc-col-header-cell-cushion { cursor: pointer !important; color: #1e293b !important; text-decoration: none !important; }
     </style>
 </head>
 <body class="p-2 md:p-8">
@@ -33,7 +35,7 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 관리 시스템 (v1.3.2)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 관리 시스템 (v1.3.3)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
@@ -137,32 +139,33 @@
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-        // 예약 모달 오픈 공통 함수 (v1.3.2 강화)
-        function openBookingModal(info) {
+        // [v1.3.3] 통합 예약 창 오픈 로직
+        function openBookingModal(dateInput) {
             if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
             
             const now = new Date();
-            const selectedStr = info.startStr || info.dateStr; // select 또는 dateClick 모두 대응
-            const selectedDate = new Date(selectedStr);
+            // dateInput이 객체인지 문자열인지 확인하여 처리
+            const selectedDate = (typeof dateInput === 'string') ? new Date(dateInput) : dateInput;
+            const dateStr = selectedDate.toISOString().split('T')[0];
+            const timeStr = selectedDate.getHours() !== 0 || selectedDate.getMinutes() !== 0 
+                            ? selectedDate.toTimeString().substring(0, 5) 
+                            : "09:00";
 
-            // 과거 일시 차단
+            // 과거 차단
             const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const targetOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
             
             if (targetOnly < todayOnly) {
                 showToast("🚫 지난 날짜는 예약할 수 없습니다.");
-                if(window.calendarObj) window.calendarObj.unselect();
                 return;
             }
-            if (selectedDate < now && selectedStr.includes('T')) {
+            // 당일 과거 시간 체크 (시간 정보가 있는 경우만)
+            if (selectedDate < now && (selectedDate.getHours() !== 0 || selectedDate.getMinutes() !== 0)) {
                 showToast("🚫 이미 지난 시간입니다.");
-                if(window.calendarObj) window.calendarObj.unselect();
                 return;
             }
 
-            currentDay = selectedStr.split('T')[0];
-            let startTime = selectedStr.includes('T') ? selectedStr.split('T')[1].substring(0, 5) : "09:00";
-            
+            currentDay = dateStr;
             const agreeCheck = document.getElementById('agreeRules');
             const confirmBtn = document.getElementById('btnConfirm');
             agreeCheck.checked = false; 
@@ -170,7 +173,7 @@
             confirmBtn.className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
 
             document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약`;
-            document.getElementById('modalTime').value = startTime;
+            document.getElementById('modalTime').value = timeStr;
             document.getElementById('bookingModal').style.display = 'flex';
             if(window.calendarObj) window.calendarObj.unselect();
         }
@@ -179,20 +182,20 @@
             initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
             locale: 'ko',
             selectable: true,
-            unselectAuto: true,
             allDaySlot: false,
+            navLinks: true, // [v1.3.3 추가] 날짜 클릭 가능하게 설정
             slotMinTime: '09:00:00',
             slotMaxTime: '20:00:00',
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek' },
             buttonText: { today: '오늘', month: '월', week: '주' },
+            
             // [v1.3.3 핵심] 상단 헤더 날짜(2. 15. 일 등) 클릭 시 동작
             navLinkDayClick: function(date) {
                 openBookingModal(date);
             },
-            // 드래그 시 실행
-            select: function(info) { openBookingModal(info); },
-            // 단순 클릭 시 실행 (주 보기에서 핵심)
-            dateClick: function(info) { openBookingModal(info); },
+            // 기존 칸 클릭/드래그 동작
+            select: function(info) { openBookingModal(info.start); },
+            dateClick: function(info) { openBookingModal(info.date); },
 
             eventContent: (arg) => {
                 const nick = (arg.event.extendedProps.user || "").split('@')[0];
