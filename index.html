@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.3.0)</title>
+    <title>무계행복마을학교 시설 예약 (v1.3.1)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -33,7 +33,7 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 관리 시스템 (v1.3.0)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 관리 시스템 (v1.3.1)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
@@ -127,8 +127,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
-
-        // 관리자 이메일 리스트 (수정됨)
+        
+        // 관리자 명단
         const ADMIN_EMAILS = ["442qkrrk@gmail.com", "nyamachoma@naver.com"];
         const isAdmin = (email) => ADMIN_EMAILS.includes(email);
 
@@ -144,12 +144,34 @@
             slotMinTime: '09:00:00', slotMaxTime: '20:00:00',
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek' },
             buttonText: { today: '오늘', month: '월', week: '주' },
+            
+            // [v1.3.1 핵심 수정: 선택 로직 및 과거 시간 차단]
             select: function(info) {
                 if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
+                
+                const now = new Date();
+                const selectedDate = new Date(info.startStr);
+
+                // 1. 과거 날짜 완전 차단
+                const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const targetOnly = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                
+                if (targetOnly < todayOnly) {
+                    showToast("🚫 지난 날짜는 예약할 수 없습니다.");
+                    calendar.unselect();
+                    return;
+                }
+
+                // 2. 오늘이지만 지난 시간인 경우 차단 (시간 단위 클릭 시)
+                if (selectedDate < now && info.startStr.includes('T')) {
+                    showToast("🚫 이미 지난 시간입니다.");
+                    calendar.unselect();
+                    return;
+                }
+
                 currentDay = info.startStr.split('T')[0];
                 let startTime = info.startStr.includes('T') ? info.startStr.split('T')[1].substring(0, 5) : "09:00";
                 
-                // [체크박스 강제 초기화 로직]
                 const agreeCheck = document.getElementById('agreeRules');
                 const confirmBtn = document.getElementById('btnConfirm');
                 agreeCheck.checked = false; 
@@ -171,7 +193,6 @@
                 return { html: `<div class="event-chip ${cls}"><div>${arg.event.extendedProps.shortTime} ${arg.event.title}</div><div style="font-size:7px; opacity:0.8;">[${nick}]</div></div>` };
             },
             eventClick: async (info) => {
-                // 관리자 이메일 리스트 체크로 수정
                 if (auth.currentUser && (auth.currentUser.email === info.event.extendedProps.user || isAdmin(auth.currentUser.email))) {
                     if (confirm(`취소하시겠습니까?`)) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("✅ 취소됨"); }
                 } else { showToast("본인 예약만 취소 가능합니다."); }
@@ -214,7 +235,15 @@
         document.getElementById('btnConfirm').onclick = async () => {
             const bSnap = await getDocs(query(collection(db, "blacklist"), where("email", "==", auth.currentUser.email)));
             if (!bSnap.empty) { showToast("🚫 차단된 사용자입니다."); return; }
-            await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room: document.getElementById('modalRoom').value, time: `${currentDay}T${document.getElementById('modalTime').value}`, shortTime: document.getElementById('modalTime').value });
+
+            // [최종 시간 검증]
+            const selectedTimeStr = `${currentDay}T${document.getElementById('modalTime').value}`;
+            if (new Date(selectedTimeStr) < new Date()) {
+                showToast("🚫 지난 시점으로는 예약할 수 없습니다.");
+                return;
+            }
+
+            await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room: document.getElementById('modalRoom').value, time: selectedTimeStr, shortTime: document.getElementById('modalTime').value });
             document.getElementById('bookingModal').style.display = 'none';
         };
 
@@ -235,7 +264,6 @@
             document.getElementById('loginInfo').classList.toggle('hidden', !u);
             if(u) {
                 document.getElementById('userNick').innerText = u.email.split('@')[0] + "님";
-                // 관리자 체크 로직 업데이트
                 if(isAdmin(u.email)) document.getElementById('btnAdminOpen').classList.remove('hidden');
                 else document.getElementById('btnAdminOpen').classList.add('hidden');
             }
