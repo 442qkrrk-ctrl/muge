@@ -11,29 +11,28 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; }
         
-        /* 캘린더 커스텀 UI */
+        /* 캘린더 한글 및 디자인 */
         .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 15px 5px !important; }
         .fc-toolbar-title { font-size: 1.2rem !important; font-weight: 900 !important; color: #065f46; }
-        .fc-button { padding: 8px 12px !important; font-size: 0.85rem !important; font-weight: 800 !important; border-radius: 10px !important; transition: all 0.2s; }
+        .fc-button { padding: 8px 12px !important; font-size: 0.85rem !important; font-weight: 800 !important; border-radius: 12px !important; }
         .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; }
-        .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
-        .fc-timegrid-slot { height: 70px !important; border-bottom: 1px solid #f1f5f9 !important; }
+        .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
+        .fc-timegrid-slot { height: 70px !important; }
         .fc-day-header a { text-decoration: none !important; color: #64748b !important; font-weight: 800; }
         
-        /* 이벤트 칩 디자인 */
-        .event-chip { font-size: 10px; padding: 5px; border-radius: 6px; color: white; font-weight: 700; line-height: 1.3; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* 이벤트 칩 */
+        .event-chip { font-size: 10px; padding: 5px; border-radius: 6px; color: white; font-weight: 700; }
         .bg-band { background-color: #10b981 !important; }
         .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; }
         .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
 
-        /* 모달 및 UI 요소 */
-        #calendar { background: white; border-radius: 24px; padding: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
+        #calendar { background: white; border-radius: 24px; padding: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; }
         @media (max-width: 768px) { .modal-overlay { align-items: flex-end; } .modal-content { border-radius: 32px 32px 0 0 !important; width: 100% !important; margin: 0 !important; } }
         
-        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 16px; padding: 16px; position: fixed; z-index: 10000; left: 50%; bottom: 40px; transform: translateX(-50%); font-weight: bold; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); }
+        #toast { visibility: hidden; min-width: 250px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 16px; padding: 16px; position: fixed; z-index: 10000; left: 50%; bottom: 40px; transform: translateX(-50%); font-weight: bold; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
@@ -44,14 +43,14 @@
     <div class="max-w-[1100px] mx-auto">
         <header class="flex justify-between items-center mb-6 px-2">
             <div>
-                <h1 class="text-2xl font-black text-emerald-900 tracking-tight leading-none">무계행복마을학교</h1>
-                <p class="text-[11px] font-bold text-emerald-600 mt-1 uppercase tracking-widest">Facility Reservation System</p>
+                <h1 class="text-2xl font-black text-emerald-900">무계행복마을학교</h1>
+                <p class="text-[11px] font-bold text-emerald-600 mt-1 uppercase tracking-widest">시설 예약 시스템</p>
             </div>
             <div class="flex gap-2 items-center">
-                <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg shadow-indigo-200">ADMIN</button>
+                <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
                 <div class="text-right mr-1">
                     <div id="userStatus" class="text-[10px] font-black text-slate-800"></div>
-                    <button id="btnLogout" class="text-[10px] font-bold text-red-400 hover:text-red-600 transition-colors">로그아웃</button>
+                    <button id="btnLogout" class="text-[10px] font-bold text-red-400">로그아웃</button>
                 </div>
             </div>
         </header>
@@ -60,93 +59,81 @@
 
         <div id="authModal" class="modal-overlay" style="display: flex;">
             <div class="modal-content w-[90%] bg-white max-w-md p-10 rounded-[40px] shadow-2xl text-center border-b-[10px] border-emerald-500">
-                <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                    <span class="text-3xl">🏫</span>
-                </div>
                 <h3 class="font-black text-2xl mb-2 text-slate-800">마을학교 로그인</h3>
-                <p class="text-sm text-slate-400 mb-8 font-medium">우리 마을의 공간을 예약하세요.</p>
-                <button id="btnGoogle" class="w-full py-4 mb-4 bg-white border-2 border-slate-100 flex items-center justify-center gap-3 rounded-2xl font-bold hover:bg-slate-50 transition-all shadow-sm">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> 구글로 시작하기
+                <p class="text-sm text-slate-400 mb-8 font-medium">공간 예약을 위해 로그인해 주세요.</p>
+                <button id="btnGoogle" class="w-full py-4 mb-4 bg-white border-2 border-slate-100 flex items-center justify-center gap-3 rounded-2xl font-bold shadow-sm">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> 구글로 로그인
                 </button>
-                <div class="flex items-center my-6 opacity-20"><hr class="flex-grow"> <span class="mx-3 text-[10px] font-bold">OR</span> <hr class="flex-grow"></div>
-                <input type="email" id="email" placeholder="이메일" class="w-full p-4 mb-3 border-2 border-slate-50 rounded-2xl bg-slate-50 outline-none focus:border-emerald-400 transition-all text-sm font-bold">
-                <input type="password" id="pw" placeholder="비밀번호" class="w-full p-4 mb-8 border-2 border-slate-50 rounded-2xl bg-slate-50 outline-none focus:border-emerald-400 transition-all text-sm font-bold">
+                <div class="flex items-center my-6 opacity-20"><hr class="flex-grow"> <span class="mx-3 text-[10px] font-bold">또는 이메일</span> <hr class="flex-grow"></div>
+                <input type="email" id="email" placeholder="이메일" class="w-full p-4 mb-3 border-2 border-slate-50 rounded-2xl bg-slate-50 outline-none text-sm font-bold">
+                <input type="password" id="pw" placeholder="비밀번호" class="w-full p-4 mb-8 border-2 border-slate-50 rounded-2xl bg-slate-50 outline-none text-sm font-bold">
                 <div class="flex gap-3">
-                    <button id="btnLogin" class="flex-1 py-4 bg-emerald-600 text-white font-black rounded-2xl shadow-lg shadow-emerald-200 active:scale-95 transition-all">로그인</button>
-                    <button id="btnJoin" class="flex-1 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl active:scale-95 transition-all">가입</button>
+                    <button id="btnLogin" class="flex-1 py-4 bg-emerald-600 text-white font-black rounded-2xl active:scale-95 transition-all">로그인</button>
+                    <button id="btnJoin" class="flex-1 py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl active:scale-95 transition-all">회원가입</button>
                 </div>
             </div>
         </div>
 
         <div id="bookingModal" class="modal-overlay">
             <div class="modal-content w-[95%] bg-white max-w-md p-8 rounded-[40px] shadow-2xl">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 id="modalDateDisplay" class="font-black text-xl text-slate-800">예약 신청</h3>
-                    <div class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[10px] font-black italic">STEP 01</div>
-                </div>
+                <h3 id="modalDateDisplay" class="font-black text-xl text-slate-800 mb-6 text-center">예약 신청</h3>
                 
-                <div class="grid grid-cols-1 gap-3 mb-6">
-                    <div class="flex gap-2">
-                        <select id="modalTime" class="flex-1 p-4 border-2 border-slate-50 rounded-2xl font-bold bg-slate-50 text-sm focus:border-emerald-400 outline-none transition-all"></select>
-                        <select id="modalRoom" class="flex-1 p-4 border-2 border-slate-50 rounded-2xl font-bold bg-slate-50 text-sm focus:border-emerald-400 outline-none transition-all">
-                            <option value="밴드실">🎸 밴드실</option>
-                            <option value="제빵실">🍞 제빵실</option>
-                            <option value="공작실">🔨 공작실</option>
-                            <option value="강의실">📖 강의실</option>
-                            <option value="다목적실">✨ 다목적실</option>
-                        </select>
-                    </div>
+                <div class="flex gap-2 mb-6">
+                    <select id="modalTime" class="flex-1 p-4 border-2 border-slate-50 rounded-2xl font-bold bg-slate-50 text-sm focus:border-emerald-400 outline-none"></select>
+                    <select id="modalRoom" class="flex-1 p-4 border-2 border-slate-50 rounded-2xl font-bold bg-slate-50 text-sm focus:border-emerald-400 outline-none">
+                        <option value="밴드실">🎸 밴드실</option>
+                        <option value="제빵실">🍞 제빵실</option>
+                        <option value="공작실">🔨 공작실</option>
+                        <option value="강의실">📖 강의실</option>
+                        <option value="다목적실">✨ 다목적실</option>
+                    </select>
                 </div>
 
-                <div class="bg-slate-900 p-6 rounded-[30px] mb-8 shadow-xl shadow-slate-200">
-                    <h4 class="text-xs font-black text-emerald-400 mb-3 flex items-center gap-2">📋 이용 필수 수칙</h4>
+                <div class="bg-slate-900 p-6 rounded-[30px] mb-8 shadow-xl">
+                    <h4 class="text-xs font-black text-emerald-400 mb-3 flex items-center gap-2">📋 필수 이용 수칙</h4>
                     <ul class="text-[11px] text-slate-300 space-y-2 font-medium">
-                        <li class="flex gap-2"><span>•</span> <span>퇴실 시 모든 전등 및 냉난방기를 끕니다.</span></li>
-                        <li class="flex gap-2"><span>•</span> <span>비품은 제자리에, 쓰레기는 수거합니다.</span></li>
-                        <li class="flex gap-2"><span>•</span> <span>공간 내 물품 파손 시 즉시 알립니다.</span></li>
+                        <li>• 퇴실 시 모든 전등 및 냉난방기를 끕니다.</li>
+                        <li>• 사용한 비품은 제자리에, 쓰레기는 수거합니다.</li>
                     </ul>
                     <label class="flex items-center gap-3 cursor-pointer mt-5 pt-4 border-t border-slate-800">
-                        <input type="checkbox" id="agreeRules" class="w-5 h-5 accent-emerald-500 rounded-lg">
-                        <span class="text-xs font-black text-white">위 수칙을 모두 지키겠습니다.</span>
+                        <input type="checkbox" id="agreeRules" class="w-6 h-6 accent-emerald-500 rounded-lg">
+                        <span class="text-sm font-black text-white">수칙을 모두 지키겠습니다.</span>
                     </label>
                 </div>
 
                 <div class="flex gap-3">
-                    <button id="closeBooking" class="flex-1 py-4 text-slate-400 font-bold hover:text-slate-600 transition-colors">닫기</button>
-                    <button id="btnConfirm" disabled class="flex-[2] py-4 bg-slate-100 text-slate-300 font-black rounded-2xl cursor-not-allowed transition-all shadow-lg">예약 확정</button>
+                    <button id="closeBooking" class="flex-1 py-4 text-slate-400 font-bold">닫기</button>
+                    <button id="btnConfirm" disabled class="flex-[2] py-4 bg-slate-200 text-white font-black rounded-2xl shadow-lg transition-all">예약 확정</button>
                 </div>
             </div>
         </div>
 
         <div id="successModal" class="modal-overlay">
-            <div class="modal-content w-[90%] bg-white max-w-sm p-10 rounded-[40px] shadow-2xl text-center">
-                <div class="w-20 h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-6 text-3xl shadow-lg shadow-emerald-200">✓</div>
+            <div class="modal-content w-[90%] bg-white max-w-sm p-10 rounded-[40px] text-center shadow-2xl">
+                <div class="text-5xl mb-4">✅</div>
                 <h3 class="font-black text-2xl text-slate-800 mb-2">예약 완료!</h3>
                 <p id="successRoomInfo" class="text-sm text-slate-400 font-bold mb-8"></p>
-                <button id="closeSuccess" class="w-full py-4 bg-slate-900 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all">확인</button>
+                <button id="closeSuccess" class="w-full py-4 bg-emerald-600 text-white font-black rounded-2xl shadow-lg">확인</button>
             </div>
         </div>
 
         <div id="adminModal" class="modal-overlay">
             <div class="modal-content w-[95%] bg-slate-50 max-w-2xl p-8 rounded-[40px] shadow-2xl max-h-[90vh] overflow-y-auto border-t-[12px] border-indigo-600">
                 <div class="flex justify-between items-center mb-8">
-                    <h3 class="font-black text-2xl text-indigo-950 italic underline decoration-indigo-200">ADMIN PANEL</h3>
-                    <button id="closeAdmin" class="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm text-slate-400 font-black">✕</button>
+                    <h3 class="font-black text-2xl text-indigo-950">운영자 관리 모드</h3>
+                    <button id="closeAdmin" class="w-10 h-10 bg-white rounded-full text-slate-400 font-black">✕</button>
                 </div>
                 
                 <div class="mb-10">
-                    <div class="flex items-center justify-between mb-4 px-1">
-                        <h4 class="font-black text-[10px] text-slate-400 uppercase tracking-widest">Global Reservations</h4>
-                        <span id="adminTotalCount" class="bg-indigo-600 text-white px-3 py-1 rounded-full text-[10px] font-black">0 TOTAL</span>
-                    </div>
+                    <h4 class="font-black text-xs text-slate-400 mb-4 px-1 uppercase tracking-widest">실시간 예약 현황 <span id="adminTotalCount" class="ml-2 bg-indigo-600 text-white px-2 py-0.5 rounded-full">0건</span></h4>
                     <div id="adminReservationList" class="space-y-3"></div>
                 </div>
 
-                <div class="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100">
-                    <h4 class="font-black text-[10px] text-slate-400 uppercase tracking-widest mb-4 px-1">Blacklist Management</h4>
+                <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+                    <h4 class="font-black text-xs text-slate-400 mb-4 px-1 uppercase tracking-widest">블랙리스트 (예약 차단)</h4>
                     <div class="flex gap-2 mb-6">
-                        <input type="email" id="blackInput" placeholder="차단할 이메일" class="flex-1 p-4 border-2 border-slate-50 rounded-2xl text-sm font-bold bg-slate-50 outline-none focus:border-indigo-400">
-                        <button id="btnBlackAdd" class="px-6 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-all">차단</button>
+                        <input type="email" id="blackInput" placeholder="차단할 이메일 입력" class="flex-1 p-4 border-2 border-slate-50 rounded-2xl text-sm font-bold bg-slate-50 outline-none">
+                        <button id="btnBlackAdd" class="px-6 bg-indigo-600 text-white font-black rounded-2xl shadow-lg">차단 등록</button>
                     </div>
                     <div id="adminBlackList" class="space-y-2"></div>
                 </div>
@@ -164,153 +151,4 @@
         const firebaseConfig = { apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8", authDomain: "muge-43e73.firebaseapp.com", projectId: "muge-43e73", storageBucket: "muge-43e73.firebasestorage.app", messagingSenderId: "356856775293", appId: "1:356856775293:web:7ad8abaf66febd0a9be714" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
-        const provider = new GoogleAuthProvider();
-
-        const ADMIN_EMAIL = "442qkrrk@gmail.com";
-        const authModal = document.getElementById('authModal');
-        const bookingModal = document.getElementById('bookingModal');
-        const adminModal = document.getElementById('adminModal');
-        const agreeRules = document.getElementById('agreeRules');
-        const btnConfirm = document.getElementById('btnConfirm');
-        const btnAdminOpen = document.getElementById('btnAdminOpen');
-
-        function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
-
-        const modalTime = document.getElementById('modalTime');
-        for (let h = 9; h <= 21; h++) { ['00', '30'].forEach(m => { const hh = String(h).padStart(2, '0'); modalTime.add(new Option(`${hh}:${m}`, `${hh}:${m}`)); }); }
-
-        let currentDay = "";
-
-        onAuthStateChanged(auth, (u) => {
-            if (u) { 
-                authModal.style.display = 'none'; 
-                document.getElementById('userStatus').innerText = (u.displayName || u.email.split('@')[0]) + "님";
-                if (u.email === ADMIN_EMAIL) btnAdminOpen.classList.remove('hidden');
-            } else { 
-                authModal.style.display = 'flex'; 
-                btnAdminOpen.classList.add('hidden');
-                bookingModal.style.display = 'none';
-            }
-        });
-
-        agreeRules.addEventListener('change', (e) => {
-            btnConfirm.disabled = !e.target.checked;
-            if (e.target.checked) { 
-                btnConfirm.classList.replace('bg-slate-100', 'bg-emerald-600'); 
-                btnConfirm.classList.replace('text-slate-300', 'text-white');
-                btnConfirm.classList.remove('cursor-not-allowed'); 
-            } else { 
-                btnConfirm.classList.replace('bg-emerald-600', 'bg-slate-100'); 
-                btnConfirm.classList.replace('text-white', 'text-slate-300');
-                btnConfirm.classList.add('cursor-not-allowed'); 
-            }
-        });
-
-        document.getElementById('btnLogin').onclick = () => signInWithEmailAndPassword(auth, email.value, pw.value).catch(() => showToast("로그인 실패"));
-        document.getElementById('btnJoin').onclick = () => createUserWithEmailAndPassword(auth, email.value, pw.value).catch(() => showToast("가입 오류"));
-        document.getElementById('btnGoogle').onclick = () => signInWithPopup(auth, provider);
-        document.getElementById('btnLogout').onclick = () => signOut(auth);
-        document.getElementById('btnAdminOpen').onclick = () => { adminModal.style.display = 'flex'; loadAdminData(); };
-        document.getElementById('closeAdmin').onclick = () => adminModal.style.display = 'none';
-        document.getElementById('closeSuccess').onclick = () => document.getElementById('successModal').style.display = 'none';
-        document.getElementById('closeBooking').onclick = () => bookingModal.style.display = 'none';
-
-        const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: window.innerWidth < 768 ? 'dayGridMonth' : 'timeGridWeek',
-            locale: 'ko', height: 'auto', slotMinTime: '09:00:00', slotMaxTime: '22:00:00',
-            selectable: true, navLinks: true,
-            buttonText: { today: '오늘', month: '월', week: '주' },
-            headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek' },
-            navLinkDayClick: (date) => { if (auth.currentUser) { currentDay = date.toLocaleDateString('en-CA'); openBookingModal(currentDay); } else { authModal.style.display = 'flex'; } },
-            select: (info) => { if (auth.currentUser) { currentDay = info.startStr.split('T')[0]; if (info.startStr.includes('T')) modalTime.value = info.startStr.split('T')[1].substring(0, 5); openBookingModal(currentDay); calendar.unselect(); } else { authModal.style.display = 'flex'; } },
-            eventContent: (arg) => {
-                const title = arg.event.title;
-                const nick = arg.event.extendedProps.user ? arg.event.extendedProps.user.split('@')[0] : "익명";
-                let cls = "bg-multi";
-                if(title.includes("밴드")) cls = "bg-band"; else if(title.includes("제빵")) cls = "bg-bread"; else if(title.includes("공작")) cls = "bg-work"; else if(title.includes("강의")) cls = "bg-study";
-                return { html: `<div class="event-chip ${cls}"><div>${arg.event.extendedProps.shortTime} ${title}</div><div style="font-size: 8px; opacity: 0.8;">[${nick}]</div></div>` };
-            },
-            eventClick: async (info) => {
-                if (!auth.currentUser) return;
-                if (auth.currentUser.email !== info.event.extendedProps.user && auth.currentUser.email !== ADMIN_EMAIL) { showToast("❌ 권한 없음"); return; }
-                if (confirm('취소하시겠습니까?')) await deleteDoc(doc(db, "reservations", info.event.id));
-            }
-        });
-        calendar.render();
-
-        function openBookingModal(day) {
-            agreeRules.checked = false; btnConfirm.disabled = true;
-            btnConfirm.classList.replace('bg-emerald-600', 'bg-slate-100'); btnConfirm.classList.replace('text-white', 'text-slate-300');
-            btnConfirm.classList.add('cursor-not-allowed');
-            document.getElementById('modalDateDisplay').innerText = day;
-            bookingModal.style.display = 'flex';
-        }
-
-        async function isBlacklisted(email) {
-            const q = query(collection(db, "blacklist"), where("email", "==", email));
-            const snap = await getDocs(q); return !snap.empty;
-        }
-
-        btnConfirm.onclick = async () => {
-            if (await isBlacklisted(auth.currentUser.email)) { showToast("🚫 차단된 사용자입니다."); bookingModal.style.display = 'none'; return; }
-            const room = document.getElementById('modalRoom').value;
-            const fullTime = `${currentDay}T${modalTime.value}`;
-            btnConfirm.disabled = true;
-            try {
-                const q = query(collection(db, "reservations"), where("room", "==", room));
-                const snap = await getDocs(q);
-                let overlap = false;
-                snap.forEach(d => { if (d.data().time.startsWith(currentDay)) { if (Math.abs(new Date(d.data().time) - new Date(fullTime)) < 3600000) overlap = true; } });
-                if (overlap) { showToast("⚠️ 이미 예약이 있습니다."); }
-                else {
-                    await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room: room, time: fullTime, shortTime: modalTime.value });
-                    bookingModal.style.display = 'none';
-                    document.getElementById('successRoomInfo').innerText = `${currentDay} ${room}`;
-                    document.getElementById('successModal').style.display = 'flex';
-                }
-            } catch (e) { showToast("오류 발생"); }
-            btnConfirm.disabled = false;
-        };
-
-        function loadAdminData() {
-            onSnapshot(collection(db, "reservations"), (snap) => {
-                const list = document.getElementById('adminReservationList');
-                document.getElementById('adminTotalCount').innerText = `${snap.size} TOTAL`; list.innerHTML = '';
-                snap.forEach(docSnap => {
-                    const d = docSnap.data();
-                    const item = document.createElement('div');
-                    item.className = "bg-white p-5 rounded-3xl flex justify-between items-center border border-slate-100 shadow-sm";
-                    item.innerHTML = `<div><div class="font-black text-indigo-950 text-sm">${d.time.replace('T', ' ')}</div><div class="text-[10px] text-slate-400 font-bold">${d.user} | ${d.room}</div></div><button onclick="window.adminDeleteRes('${docSnap.id}')" class="text-xs font-black text-red-500">취소</button>`;
-                    list.appendChild(item);
-                });
-            });
-            onSnapshot(collection(db, "blacklist"), (snap) => {
-                const list = document.getElementById('adminBlackList'); list.innerHTML = '';
-                snap.forEach(docSnap => {
-                    const d = docSnap.data();
-                    const item = document.createElement('div');
-                    item.className = "bg-slate-50 p-4 rounded-2xl flex justify-between items-center mb-2";
-                    item.innerHTML = `<span class="text-xs font-bold text-slate-600">${d.email}</span><button onclick="window.adminRemoveBlack('${docSnap.id}')" class="text-[10px] font-black text-indigo-400 uppercase">Release</button>`;
-                    list.appendChild(item);
-                });
-            });
-        }
-
-        window.adminDeleteRes = async (id) => { if(confirm('강제 취소할까요?')) await deleteDoc(doc(db, "reservations", id)); };
-        window.adminRemoveBlack = async (id) => { if(confirm('해제할까요?')) await deleteDoc(doc(db, "blacklist", id)); };
-        document.getElementById('btnBlackAdd').onclick = async () => {
-            const emailValue = document.getElementById('blackInput').value.trim();
-            if(!emailValue) return;
-            await addDoc(collection(db, "blacklist"), { email: emailValue });
-            document.getElementById('blackInput').value = ''; showToast("차단 완료");
-        };
-
-        onSnapshot(collection(db, "reservations"), (snap) => {
-            const events = [];
-            snap.forEach(doc => { const d = doc.data(); events.push({ id: doc.id, title: d.room, start: d.time, extendedProps: { shortTime: d.shortTime, user: d.user } }); });
-            calendar.removeAllEvents(); calendar.addEventSource(events);
-        });
-    </script>
-</body>
-</html>
+        const db = getFirestore(
