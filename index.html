@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.4.6)</title>
+    <title>무계행복마을학교 시설 예약 (v1.5.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -16,7 +16,6 @@
         .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
         .fc-day-sat { background-color: #eff6ff !important; } 
-        .fc-col-header-cell.fc-day-sat a { color: #2563eb !important; }
         .event-chip { font-size: 10px; padding: 4px; border-radius: 6px; color: white; font-weight: 700; width: 100%; overflow: hidden; text-overflow: ellipsis; }
         .bg-band { background-color: #10b981 !important; } .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; } .bg-study { background-color: #3b82f6 !important; }
@@ -35,7 +34,7 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.4.6)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.0)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
@@ -92,7 +91,11 @@
                     <h3 class="font-black text-xl text-indigo-950">운영 대시보드</h3>
                     <button onclick="document.getElementById('adminModal').style.display='none'" class="text-slate-400 font-bold">닫기</button>
                 </div>
-                <div id="adminList" class="space-y-2 mb-8"></div>
+                <h4 class="font-black text-sm mb-2 text-indigo-600">📅 전체 예약 현황</h4>
+                <div id="adminList" class="space-y-2 mb-8 text-xs"></div>
+                
+                <h4 class="font-black text-sm mb-2 text-red-600">🚫 블랙리스트 관리</h4>
+                <div id="blackListArea" class="space-y-2 text-xs"></div>
             </div>
         </div>
 
@@ -120,11 +123,12 @@
 
         let currentDay = "";
         const modalTime = document.getElementById('modalTime');
-        for (let h = 9; h <= 19; h++) { ['00', '30'].forEach(m => { const hh = String(h).padStart(2, '0'); modalTime.add(new Option(`${hh}:${m}`, `${hh}:${m}`)); }); }
+        // 예약 가능 시간: 09:00 ~ 18:00
+        for (let h = 9; h <= 18; h++) { ['00', '30'].forEach(m => { if(h===18 && m==='30') return; const hh = String(h).padStart(2, '0'); modalTime.add(new Option(`${hh}:${m}`, `${hh}:${m}`)); }); }
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-        function openBookingModal(date) {
+        function openBookingModal(date, clickedTime = null) {
             if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -132,7 +136,16 @@
             currentDay = `${year}-${month}-${day}`;
             document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
             
-            // 초기화
+            if (clickedTime) {
+                const hours = String(clickedTime.getHours()).padStart(2, '0');
+                const minutes = clickedTime.getMinutes() < 30 ? "00" : "30";
+                const timeStr = `${hours}:${minutes}`;
+                // 예약 가능 범위 내인지 확인 후 세팅
+                if (modalTime.querySelector(`option[value="${timeStr}"]`)) {
+                    document.getElementById('modalTime').value = timeStr;
+                }
+            }
+
             document.getElementById('agreeRules').checked = false;
             document.getElementById('btnConfirm').disabled = true;
             document.getElementById('btnConfirm').className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
@@ -142,11 +155,10 @@
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth',
             locale: 'ko',
-            headerToolbar: { 
-                left: 'title', 
-                center: '', 
-                right: 'prev,next today dayGridMonth,timeGridWeek,satView' 
-            },
+            allDaySlot: false, // [요청] all-day 제거
+            slotMinTime: '09:00:00', // [요청] 오전 9시 시작
+            slotMaxTime: '18:30:00', // [요청] 오후 6시 종료 (6시 슬롯 포함 위해 18:30)
+            headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,satView' },
             customButtons: {
                 satView: {
                     text: '토',
@@ -155,12 +167,11 @@
                         const satDate = new Date(current);
                         satDate.setDate(current.getDate() + (6 - current.getDay()));
                         calendar.changeView('timeGridDay', satDate);
-                        showToast("토요일 일정을 확인합니다.");
                     }
                 }
             },
             buttonText: { today: '오늘', month: '월', week: '주' },
-            dateClick: function(info) { openBookingModal(info.date); },
+            dateClick: function(info) { openBookingModal(info.date, info.view.type !== 'dayGridMonth' ? info.date : null); },
             eventContent: (arg) => {
                 const nick = (arg.event.extendedProps.user || "").split('@')[0];
                 let cls = "bg-multi";
@@ -172,35 +183,66 @@
             }
         });
 
-        // 예약 확정
+        // 예약 확정 및 블랙리스트 대조
         document.getElementById('btnConfirm').onclick = async () => {
+            const userEmail = auth.currentUser.email;
+
+            // 블랙리스트 확인
+            const blackSnap = await getDocs(query(collection(db, "blacklist"), where("email", "==", userEmail)));
+            if (!blackSnap.empty) {
+                showToast("🚫 예약이 제한된 계정입니다.");
+                return;
+            }
+
             const timeVal = document.getElementById('modalTime').value;
             const roomVal = document.getElementById('modalRoom').value;
             const finalTime = `${currentDay}T${timeVal}`;
+
             const q = query(collection(db, "reservations"), where("time", "==", finalTime), where("room", "==", roomVal));
             const snap = await getDocs(q);
             if (!snap.empty) { showToast("🚫 이미 예약된 시간입니다."); return; }
-            await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room: roomVal, time: finalTime, shortTime: timeVal });
+
+            await addDoc(collection(db, "reservations"), { user: userEmail, room: roomVal, time: finalTime, shortTime: timeVal });
             showToast("✅ 예약 완료!");
             document.getElementById('bookingModal').style.display = 'none';
         };
 
-        // 관리자 모달 열기
+        // 관리자 모드 활성화 및 블랙리스트 관리
         document.getElementById('btnAdminOpen').onclick = async () => {
-            const snap = await getDocs(collection(db, "reservations"));
+            // 예약 관리
+            const resSnap = await getDocs(collection(db, "reservations"));
             const list = document.getElementById('adminList');
             list.innerHTML = "";
             const sorted = [];
-            snap.forEach(s => sorted.push({id: s.id, ...s.data()}));
+            resSnap.forEach(s => sorted.push({id: s.id, ...s.data()}));
             sorted.sort((a,b) => a.time.localeCompare(b.time)).forEach(d => {
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100";
-                div.innerHTML = `<div><div class="text-[10px] text-slate-400 font-bold">${d.time.split('T')[0]} ${d.shortTime}</div><div class="font-black text-slate-800">${d.room} <span class="text-indigo-500 text-xs">[${d.user.split('@')[0]}]</span></div></div><button class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-xs font-black">취소</button>`;
-                div.querySelector('button').onclick = async () => { if(confirm('삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", d.id)); showToast("삭제됨"); div.remove(); } };
+                div.className = "flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-slate-100";
+                div.innerHTML = `<div><div class="font-bold">${d.time.split('T')[0]} ${d.shortTime} | ${d.room}</div><div class="text-indigo-500 font-medium">${d.user}</div></div>
+                                 <div class="flex gap-1">
+                                    <button class="bg-red-50 text-red-500 px-2 py-1 rounded-lg font-black" onclick="deleteBooking('${d.id}')">취소</button>
+                                    <button class="bg-slate-800 text-white px-2 py-1 rounded-lg font-black" onclick="addToBlacklist('${d.user}')">차단</button>
+                                 </div>`;
                 list.appendChild(div);
+            });
+
+            // 블랙리스트 명단
+            const blackSnap = await getDocs(collection(db, "blacklist"));
+            const blackArea = document.getElementById('blackListArea');
+            blackArea.innerHTML = "";
+            blackSnap.forEach(s => {
+                const b = s.data();
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-red-50 p-2 rounded-lg text-red-700 font-bold border border-red-100";
+                div.innerHTML = `<span>${b.email}</span><button onclick="removeFromBlacklist('${s.id}')" class="underline text-[10px]">해제</button>`;
+                blackArea.appendChild(div);
             });
             document.getElementById('adminModal').style.display = 'flex';
         };
+
+        window.deleteBooking = async (id) => { if(confirm('예약을 취소하시겠습니까?')) { await deleteDoc(doc(db, "reservations", id)); showToast("취소 완료"); document.getElementById('btnAdminOpen').click(); }};
+        window.addToBlacklist = async (email) => { if(confirm(`${email} 사용자를 차단하시겠습니까?`)) { await addDoc(collection(db, "blacklist"), { email }); showToast("차단 완료"); document.getElementById('btnAdminOpen').click(); }};
+        window.removeFromBlacklist = async (id) => { if(confirm('차단을 해제하시겠습니까?')) { await deleteDoc(doc(db, "blacklist", id)); showToast("해제 완료"); document.getElementById('btnAdminOpen').click(); }};
 
         document.getElementById('agreeRules').onchange = (e) => {
             const btn = document.getElementById('btnConfirm');
