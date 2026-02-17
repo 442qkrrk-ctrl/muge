@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.5.3)</title>
+    <title>무계행복마을학교 시설 예약 (v1.5.4)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -34,7 +34,7 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.3)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.4)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
@@ -72,16 +72,14 @@
                     <h3 class="font-black text-xl text-indigo-950">운영 대시보드</h3>
                     <button onclick="document.getElementById('adminModal').style.display='none'" class="text-slate-400 font-bold">닫기</button>
                 </div>
-                
                 <section class="mb-8">
                     <h4 class="font-black text-sm mb-3 text-indigo-600">📅 예약 리스트 (취소 관리)</h4>
-                    <div id="adminList" class="space-y-2"></div>
+                    <div id="adminList" class="space-y-2 text-xs"></div>
                 </section>
-
                 <section>
                     <h4 class="font-black text-sm mb-3 text-red-600">🚫 블랙리스트 관리</h4>
                     <div class="flex gap-2 mb-4">
-                        <input type="email" id="blackEmailInput" placeholder="차단할 이메일 입력" class="flex-1 p-3 border-2 border-white rounded-xl text-xs font-bold shadow-sm outline-none focus:border-red-300">
+                        <input type="email" id="blackEmailInput" placeholder="차단할 이메일 입력" class="flex-1 p-3 border-2 border-white rounded-xl text-xs font-bold shadow-sm outline-none">
                         <button id="btnAddBlack" class="bg-red-600 text-white px-4 py-3 rounded-xl text-xs font-black shadow-lg">차단 추가</button>
                     </div>
                     <div id="blackListArea" class="space-y-2"></div>
@@ -122,18 +120,23 @@
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,satView' },
             customButtons: { satView: { text: '토', click: function() { const current = calendar.getDate(); const sat = new Date(current); sat.setDate(current.getDate() + (6 - current.getDay())); calendar.changeView('timeGridDay', sat); } } },
             buttonText: { today: '오늘', month: '월', week: '주' },
+            // 날짜 클릭 이벤트 (모든 뷰에서 팝업)
             dateClick: (info) => {
                 if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
                 const d = info.date;
                 currentDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
-                if (info.view.type !== 'dayGridMonth') {
-                    const hh = String(d.getHours()).padStart(2, '0');
-                    const mm = d.getMinutes() < 30 ? "00" : "30";
-                    if (modalTime.querySelector(`option[value="${hh}:${mm}"]`)) modalTime.value = `${hh}:${mm}`;
+                
+                // 주/토 보기에서 특정 시간 클릭 시 해당 시간 자동 선택
+                const hh = String(d.getHours()).padStart(2, '0');
+                const mm = d.getMinutes() < 30 ? "00" : "30";
+                if (modalTime.querySelector(`option[value="${hh}:${mm}"]`)) {
+                    modalTime.value = `${hh}:${mm}`;
                 }
+                
                 document.getElementById('agreeRules').checked = false;
                 document.getElementById('btnConfirm').disabled = true;
+                document.getElementById('btnConfirm').className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
                 document.getElementById('bookingModal').style.display = 'flex';
             },
             eventContent: (arg) => {
@@ -144,20 +147,27 @@
             }
         });
 
+        // 예약 확정 (중복 체크 강화)
         document.getElementById('btnConfirm').onclick = async () => {
             const email = auth.currentUser.email;
+            
+            // 1. 블랙리스트 확인
             const blackSnap = await getDocs(query(collection(db, "blacklist"), where("email", "==", email)));
             if (!blackSnap.empty) return showToast("🚫 예약 제한 계정입니다.");
 
             const time = document.getElementById('modalTime').value;
             const room = document.getElementById('modalRoom').value;
             const target = `${currentDay}T${time}`;
+
+            // 2. [강력 중복 체크] 실시간 DB 조회
             const q = query(collection(db, "reservations"), where("time", "==", target), where("room", "==", room));
             const snap = await getDocs(q);
             if (!snap.empty) return showToast("🚫 이미 선점된 시간입니다.");
 
+            // 3. 예약 진행
             await addDoc(collection(db, "reservations"), { user: email, room: room, time: target, shortTime: time });
-            showToast("✅ 예약 완료!"); document.getElementById('bookingModal').style.display = 'none';
+            showToast("✅ 예약 완료!");
+            document.getElementById('bookingModal').style.display = 'none';
         };
 
         const loadAdminData = async () => {
@@ -168,25 +178,23 @@
             resSnap.forEach(s => sorted.push({id: s.id, ...s.data()}));
             sorted.sort((a,b) => a.time.localeCompare(b.time)).forEach(d => {
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100";
+                div.className = "flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-2";
                 div.innerHTML = `<div><div class="text-[10px] text-slate-400 font-bold">${d.time.split('T')[0]} ${d.shortTime}</div><div class="font-black text-slate-800">${d.room} <span class="text-indigo-500 text-xs">[${d.user.split('@')[0]}]</span></div></div>
                                  <button class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-xs font-black" onclick="deleteBooking('${d.id}')">취소</button>`;
                 list.appendChild(div);
             });
-
             const blackSnap = await getDocs(collection(db, "blacklist"));
             const blackArea = document.getElementById('blackListArea');
             blackArea.innerHTML = "";
             blackSnap.forEach(s => {
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-red-50 p-3 rounded-xl border border-red-100 text-red-700 font-bold text-xs";
+                div.className = "flex justify-between items-center bg-red-50 p-3 rounded-xl border border-red-100 text-red-700 font-bold text-xs mb-2";
                 div.innerHTML = `<span>${s.data().email}</span><button onclick="removeFromBlacklist('${s.id}')" class="underline">해제</button>`;
                 blackArea.appendChild(div);
             });
         };
 
         document.getElementById('btnAdminOpen').onclick = () => { loadAdminData(); document.getElementById('adminModal').style.display = 'flex'; };
-        
         document.getElementById('btnAddBlack').onclick = async () => {
             const email = document.getElementById('blackEmailInput').value.trim();
             if(!email) return;
