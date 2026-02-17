@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.6.0)</title>
+    <title>무계행복마을학교 시설 예약 (v1.7.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -25,10 +25,12 @@
         .bg-work { background-color: #6366f1 !important; } .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-content { transform: translateY(20px); transition: all 0.3s ease-out; }
         #toast { visibility: hidden; min-width: 200px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 12px; position: fixed; z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+        option:disabled { color: #cbd5e1; text-decoration: line-through; }
     </style>
 </head>
 <body class="p-2 md:p-8">
@@ -37,7 +39,7 @@
         <header class="flex justify-between items-center mb-4 px-2">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.6.0)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.7.0)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자</button>
@@ -54,8 +56,20 @@
             <div class="modal-content w-[95%] bg-white max-w-sm p-6 rounded-[30px] shadow-2xl">
                 <h3 id="modalDateDisplay" class="font-black text-lg text-center mb-6 text-slate-800">예약 신청</h3>
                 <div class="space-y-4 mb-6">
-                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택</label><select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-400"></select></div>
-                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label><select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-400"><option value="밴드실">🎸 밴드실</option><option value="제빵실">🍞 제빵실</option><option value="공작실">🔨 공작실</option><option value="강의실">📖 강의실</option><option value="다목적실">✨ 다목적실</option></select></div>
+                    <div>
+                        <label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label>
+                        <select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-400">
+                            <option value="밴드실">🎸 밴드실</option>
+                            <option value="제빵실">🍞 제빵실</option>
+                            <option value="공작실">🔨 공작실</option>
+                            <option value="강의실">📖 강의실</option>
+                            <option value="다목적실">✨ 다목적실</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택</label>
+                        <select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-400"></select>
+                    </div>
                 </div>
                 <div class="bg-slate-900 p-5 rounded-2xl mb-6 shadow-xl text-[13px] text-slate-300">
                     <h4 class="text-[12px] font-black text-emerald-400 mb-2">📋 필수 이용 수칙</h4>
@@ -108,19 +122,50 @@
 
         let currentDay = "";
         const modalTime = document.getElementById('modalTime');
-        for (let h = 9; h <= 18; h++) { ['00', '30'].forEach(m => { if(h===18 && m==='30') return; const hh = String(h).padStart(2, '0'); modalTime.add(new Option(`${hh}:${m}`, `${hh}:${m}`)); }); }
+        const initTimeOptions = () => {
+            modalTime.innerHTML = "";
+            for (let h = 9; h <= 18; h++) { 
+                ['00', '30'].forEach(m => { 
+                    if(h===18 && m==='30') return; 
+                    const hh = String(h).padStart(2, '0'); 
+                    modalTime.add(new Option(`${hh}:${m}`, `${hh}:${m}`)); 
+                }); 
+            }
+        };
+        initTimeOptions();
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-        function openBookingModal(date, fromHeader = false) {
+        // [v1.7.0] 예약 가능 시간 실시간 필터링 함수
+        async function updateAvailableTimes(dateStr, roomName) {
+            const options = modalTime.options;
+            const q = query(collection(db, "reservations"), 
+                      where("time", ">=", `${dateStr}T09:00`), 
+                      where("time", "<=", `${dateStr}T18:00`),
+                      where("room", "==", roomName));
+            
+            const snap = await getDocs(q);
+            const bookedTimes = snap.docs.map(doc => doc.data().shortTime);
+
+            for (let i = 0; i < options.length; i++) {
+                const isBooked = bookedTimes.includes(options[i].value);
+                options[i].disabled = isBooked;
+                options[i].text = isBooked ? `${options[i].value} (예약됨)` : options[i].value;
+            }
+        }
+
+        async function openBookingModal(date, fromHeader = false) {
             if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
             currentDay = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            
+            await updateAvailableTimes(currentDay, document.getElementById('modalRoom').value);
+            
             document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
             if (!fromHeader) {
                 const hh = String(date.getHours()).padStart(2, '0');
                 const mm = date.getMinutes() < 30 ? "00" : "30";
-                if (modalTime.querySelector(`option[value="${hh}:${mm}"]`)) modalTime.value = `${hh}:${mm}`;
-            } else { modalTime.value = "09:00"; }
+                if (modalTime.querySelector(`option[value="${hh}:${mm}"]:not(:disabled)`)) modalTime.value = `${hh}:${mm}`;
+            }
             document.getElementById('agreeRules').checked = false;
             document.getElementById('btnConfirm').disabled = true;
             document.getElementById('btnConfirm').className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
@@ -153,6 +198,9 @@
             }
         });
 
+        // 시설 변경 시 시간 필터링 업데이트
+        document.getElementById('modalRoom').onchange = () => updateAvailableTimes(currentDay, document.getElementById('modalRoom').value);
+
         // 인증 로직
         document.getElementById('btnLoginEmail').onclick = () => {
             const e = document.getElementById('authEmail').value; const p = document.getElementById('authPw').value;
@@ -169,12 +217,15 @@
             const email = auth.currentUser.email;
             const blackSnap = await getDocs(query(collection(db, "blacklist"), where("email", "==", email)));
             if (!blackSnap.empty) return showToast("🚫 차단된 계정입니다.");
+            
             const time = document.getElementById('modalTime').value;
             const room = document.getElementById('modalRoom').value;
             const target = `${currentDay}T${time}`;
+            
             const snap = await getDocs(query(collection(db, "reservations"), where("time", "==", target), where("room", "==", room)));
-            if (!snap.empty) return showToast("🚫 이미 예약된 시간입니다.");
-            await addDoc(collection(db, "reservations"), { user: email, room: room, time: target, shortTime: time });
+            if (!snap.empty) return showToast("🚫 이미 그새 예약되었습니다.");
+            
+            await addDoc(collection(db, "reservations"), { user: email, room: room, time: target, shortTime: time, createdAt: new Date().toISOString() });
             showToast("✅ 예약 완료!"); document.getElementById('bookingModal').style.display = 'none';
         };
 
