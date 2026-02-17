@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.5.4)</title>
+    <title>무계행복마을학교 시설 예약 (v1.5.6)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -16,6 +16,8 @@
         .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
         .fc-day-sat { background-color: #eff6ff !important; } 
+        /* 날짜 클릭 가능하게 스타일 수정 */
+        .fc .fc-col-header-cell-cushion { cursor: pointer; padding: 8px 4px !important; display: block; width: 100%; }
         .event-chip { font-size: 10px; padding: 4px; border-radius: 6px; color: white; font-weight: 700; width: 100%; overflow: hidden; text-overflow: ellipsis; }
         .bg-band { background-color: #10b981 !important; } .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; } .bg-study { background-color: #3b82f6 !important; }
@@ -34,7 +36,7 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.4)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.6)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
@@ -68,31 +70,13 @@
 
         <div id="adminModal" class="modal-overlay">
             <div class="modal-content w-[95%] bg-slate-50 max-w-2xl p-6 rounded-[30px] shadow-2xl max-h-[85vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-black text-xl text-indigo-950">운영 대시보드</h3>
-                    <button onclick="document.getElementById('adminModal').style.display='none'" class="text-slate-400 font-bold">닫기</button>
-                </div>
-                <section class="mb-8">
-                    <h4 class="font-black text-sm mb-3 text-indigo-600">📅 예약 리스트 (취소 관리)</h4>
-                    <div id="adminList" class="space-y-2 text-xs"></div>
-                </section>
-                <section>
-                    <h4 class="font-black text-sm mb-3 text-red-600">🚫 블랙리스트 관리</h4>
-                    <div class="flex gap-2 mb-4">
-                        <input type="email" id="blackEmailInput" placeholder="차단할 이메일 입력" class="flex-1 p-3 border-2 border-white rounded-xl text-xs font-bold shadow-sm outline-none">
-                        <button id="btnAddBlack" class="bg-red-600 text-white px-4 py-3 rounded-xl text-xs font-black shadow-lg">차단 추가</button>
-                    </div>
-                    <div id="blackListArea" class="space-y-2"></div>
-                </section>
+                <div class="flex justify-between items-center mb-6"><h3 class="font-black text-xl text-indigo-950">운영 대시보드</h3><button onclick="document.getElementById('adminModal').style.display='none'" class="text-slate-400 font-bold">닫기</button></div>
+                <section class="mb-8"><h4 class="font-black text-sm mb-3 text-indigo-600">📅 예약 리스트 (취소 관리)</h4><div id="adminList" class="space-y-2 text-xs"></div></section>
+                <section><h4 class="font-black text-sm mb-3 text-red-600">🚫 블랙리스트 관리</h4><div class="flex gap-2 mb-4"><input type="email" id="blackEmailInput" placeholder="차단할 이메일 입력" class="flex-1 p-3 border-2 border-white rounded-xl text-xs font-bold shadow-sm outline-none"><button id="btnAddBlack" class="bg-red-600 text-white px-4 py-3 rounded-xl text-xs font-black shadow-lg">차단 추가</button></div><div id="blackListArea" class="space-y-2"></div></section>
             </div>
         </div>
 
-        <div id="authModal" class="modal-overlay">
-            <div class="modal-content w-[90%] bg-white max-w-sm p-8 rounded-[30px] shadow-2xl text-center">
-                <h3 class="font-black text-xl mb-6">마을학교 로그인</h3>
-                <button id="btnGoogle" class="w-full py-3 mb-4 border-2 rounded-xl font-bold flex justify-center items-center gap-2"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">구글 로그인</button>
-            </div>
-        </div>
+        <div id="authModal" class="modal-overlay"><div class="modal-content w-[90%] bg-white max-w-sm p-8 rounded-[30px] shadow-2xl text-center"><h3 class="font-black text-xl mb-6">마을학교 로그인</h3><button id="btnGoogle" class="w-full py-3 mb-4 border-2 rounded-xl font-bold flex justify-center items-center gap-2"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">구글 로그인</button></div></div>
     </div>
     <div id="toast"></div>
 
@@ -115,30 +99,36 @@
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
+        function openBookingModal(date, fromHeader = false) {
+            if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
+            currentDay = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
+            
+            // 헤더(날짜/요일) 클릭 시에는 시간을 기본 09:00으로, 칸 클릭 시에는 해당 시간으로
+            if (!fromHeader) {
+                const hh = String(date.getHours()).padStart(2, '0');
+                const mm = date.getMinutes() < 30 ? "00" : "30";
+                if (modalTime.querySelector(`option[value="${hh}:${mm}"]`)) modalTime.value = `${hh}:${mm}`;
+            } else {
+                modalTime.value = "09:00";
+            }
+            
+            document.getElementById('agreeRules').checked = false;
+            document.getElementById('btnConfirm').disabled = true;
+            document.getElementById('btnConfirm').className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
+            document.getElementById('bookingModal').style.display = 'flex';
+        }
+
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth', locale: 'ko', allDaySlot: false, slotMinTime: '09:00:00', slotMaxTime: '18:30:00',
+            selectable: true, 
+            navLinks: true, // 날짜/요일 클릭 활성화
+            navLinkDayClick: (date) => { openBookingModal(date, true); }, // 상단 날짜 클릭 시 동작
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,satView' },
             customButtons: { satView: { text: '토', click: function() { const current = calendar.getDate(); const sat = new Date(current); sat.setDate(current.getDate() + (6 - current.getDay())); calendar.changeView('timeGridDay', sat); } } },
             buttonText: { today: '오늘', month: '월', week: '주' },
-            // 날짜 클릭 이벤트 (모든 뷰에서 팝업)
-            dateClick: (info) => {
-                if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
-                const d = info.date;
-                currentDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
-                
-                // 주/토 보기에서 특정 시간 클릭 시 해당 시간 자동 선택
-                const hh = String(d.getHours()).padStart(2, '0');
-                const mm = d.getMinutes() < 30 ? "00" : "30";
-                if (modalTime.querySelector(`option[value="${hh}:${mm}"]`)) {
-                    modalTime.value = `${hh}:${mm}`;
-                }
-                
-                document.getElementById('agreeRules').checked = false;
-                document.getElementById('btnConfirm').disabled = true;
-                document.getElementById('btnConfirm').className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
-                document.getElementById('bookingModal').style.display = 'flex';
-            },
+            dateClick: (info) => { if(info.view.type === 'dayGridMonth') openBookingModal(info.date); },
+            select: (info) => { if(info.view.type !== 'dayGridMonth') { openBookingModal(info.start); calendar.unselect(); } },
             eventContent: (arg) => {
                 const nick = (arg.event.extendedProps.user || "").split('@')[0];
                 let cls = "bg-multi";
@@ -147,24 +137,16 @@
             }
         });
 
-        // 예약 확정 (중복 체크 강화)
         document.getElementById('btnConfirm').onclick = async () => {
             const email = auth.currentUser.email;
-            
-            // 1. 블랙리스트 확인
             const blackSnap = await getDocs(query(collection(db, "blacklist"), where("email", "==", email)));
             if (!blackSnap.empty) return showToast("🚫 예약 제한 계정입니다.");
-
             const time = document.getElementById('modalTime').value;
             const room = document.getElementById('modalRoom').value;
             const target = `${currentDay}T${time}`;
-
-            // 2. [강력 중복 체크] 실시간 DB 조회
             const q = query(collection(db, "reservations"), where("time", "==", target), where("room", "==", room));
             const snap = await getDocs(q);
             if (!snap.empty) return showToast("🚫 이미 선점된 시간입니다.");
-
-            // 3. 예약 진행
             await addDoc(collection(db, "reservations"), { user: email, room: room, time: target, shortTime: time });
             showToast("✅ 예약 완료!");
             document.getElementById('bookingModal').style.display = 'none';
