@@ -3,34 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.5.2)</title>
+    <title>무계행복마을학교 시설 예약 (v1.5.3)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; -webkit-tap-highlight-color: transparent; }
-        
-        /* v1.2.7 스타일 복구 */
         .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 10px 5px !important; }
         .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 900 !important; color: #065f46; }
         .fc-button { padding: 6px 10px !important; font-size: 0.8rem !important; font-weight: 800 !important; border-radius: 10px !important; }
         .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
         .fc-day-sat { background-color: #eff6ff !important; } 
-        .fc-col-header-cell.fc-day-sat a { color: #2563eb !important; }
-
         .event-chip { font-size: 10px; padding: 4px; border-radius: 6px; color: white; font-weight: 700; width: 100%; overflow: hidden; text-overflow: ellipsis; }
         .bg-band { background-color: #10b981 !important; } .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; } .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
-
         #calendar { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 500px; width: 100%; }
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; }
-        
-        /* 모바일 짤림 방지 */
-        .fc { max-width: 100% !important; }
-        
         #toast { visibility: hidden; min-width: 200px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 12px; position: fixed; z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; font-size: 13px; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
@@ -43,7 +34,7 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.2)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.3)</p>
             </div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
@@ -60,32 +51,13 @@
             <div class="modal-content w-[95%] bg-white max-w-sm p-6 rounded-[30px] shadow-2xl">
                 <h3 id="modalDateDisplay" class="font-black text-lg text-center mb-6 text-slate-800">예약 신청</h3>
                 <div class="space-y-4 mb-6">
-                    <div>
-                        <label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택</label>
-                        <select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-400"></select>
-                    </div>
-                    <div>
-                        <label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label>
-                        <select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-400">
-                            <option value="밴드실">🎸 밴드실</option>
-                            <option value="제빵실">🍞 제빵실</option>
-                            <option value="공작실">🔨 공작실</option>
-                            <option value="강의실">📖 강의실</option>
-                            <option value="다목적실">✨ 다목적실</option>
-                        </select>
-                    </div>
+                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택</label><select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-400"></select></div>
+                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label><select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none focus:border-emerald-400"><option value="밴드실">🎸 밴드실</option><option value="제빵실">🍞 제빵실</option><option value="공작실">🔨 공작실</option><option value="강의실">📖 강의실</option><option value="다목적실">✨ 다목적실</option></select></div>
                 </div>
                 <div class="bg-slate-900 p-5 rounded-2xl mb-6 shadow-xl">
                     <h4 class="text-[12px] font-black text-emerald-400 mb-2">📋 필수 이용 수칙</h4>
-                    <ul class="text-[13px] text-slate-300 space-y-1 font-medium mb-4">
-                        <li>• 퇴실 시 전등 및 냉난방기를 반드시 끕니다.</li>
-                        <li>• 사용한 비품은 제자리에, 쓰레기는 수거합니다.</li>
-                        <li>• 시설 훼손 시 원상 복구의 책임이 있습니다.</li>
-                    </ul>
-                    <label class="flex items-center gap-3 cursor-pointer pt-3 border-t border-slate-800">
-                        <input type="checkbox" id="agreeRules" class="w-5 h-5 accent-emerald-500">
-                        <span class="text-xs font-black text-white">수칙을 모두 확인했으며 준수하겠습니다.</span>
-                    </label>
+                    <ul class="text-[13px] text-slate-300 space-y-1 font-medium mb-4"><li>• 퇴실 시 전등 및 냉난방기를 반드시 끕니다.</li><li>• 사용한 비품은 제자리에, 쓰레기는 수거합니다.</li><li>• 시설 훼손 시 원상 복구의 책임이 있습니다.</li></ul>
+                    <label class="flex items-center gap-3 cursor-pointer pt-3 border-t border-slate-800"><input type="checkbox" id="agreeRules" class="w-5 h-5 accent-emerald-500"><span class="text-xs font-black text-white">수칙을 모두 확인했으며 준수하겠습니다.</span></label>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="document.getElementById('bookingModal').style.display='none'" class="flex-1 py-3 text-slate-400 font-bold">취소</button>
@@ -100,17 +72,27 @@
                     <h3 class="font-black text-xl text-indigo-950">운영 대시보드</h3>
                     <button onclick="document.getElementById('adminModal').style.display='none'" class="text-slate-400 font-bold">닫기</button>
                 </div>
-                <h4 class="font-black text-sm mb-2 text-indigo-600">📅 예약 리스트</h4>
-                <div id="adminList" class="space-y-2 mb-8"></div>
-                <h4 class="font-black text-sm mb-2 text-red-600">🚫 블랙리스트 관리</h4>
-                <div id="blackListArea" class="space-y-2"></div>
+                
+                <section class="mb-8">
+                    <h4 class="font-black text-sm mb-3 text-indigo-600">📅 예약 리스트 (취소 관리)</h4>
+                    <div id="adminList" class="space-y-2"></div>
+                </section>
+
+                <section>
+                    <h4 class="font-black text-sm mb-3 text-red-600">🚫 블랙리스트 관리</h4>
+                    <div class="flex gap-2 mb-4">
+                        <input type="email" id="blackEmailInput" placeholder="차단할 이메일 입력" class="flex-1 p-3 border-2 border-white rounded-xl text-xs font-bold shadow-sm outline-none focus:border-red-300">
+                        <button id="btnAddBlack" class="bg-red-600 text-white px-4 py-3 rounded-xl text-xs font-black shadow-lg">차단 추가</button>
+                    </div>
+                    <div id="blackListArea" class="space-y-2"></div>
+                </section>
             </div>
         </div>
 
         <div id="authModal" class="modal-overlay">
             <div class="modal-content w-[90%] bg-white max-w-sm p-8 rounded-[30px] shadow-2xl text-center">
                 <h3 class="font-black text-xl mb-6">마을학교 로그인</h3>
-                <button id="btnGoogle" class="w-full py-3 border-2 rounded-xl font-bold flex justify-center items-center gap-2"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">구글 로그인</button>
+                <button id="btnGoogle" class="w-full py-3 mb-4 border-2 rounded-xl font-bold flex justify-center items-center gap-2"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">구글 로그인</button>
             </div>
         </div>
     </div>
@@ -135,52 +117,29 @@
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-        function openBookingModal(date, clickedTime = null) {
-            if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            currentDay = `${year}-${month}-${day}`;
-            document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
-            if (clickedTime) {
-                const hh = String(clickedTime.getHours()).padStart(2, '0');
-                const mm = clickedTime.getMinutes() < 30 ? "00" : "30";
-                const t = `${hh}:${mm}`;
-                if (modalTime.querySelector(`option[value="${t}"]`)) modalTime.value = t;
-            }
-            document.getElementById('agreeRules').checked = false;
-            document.getElementById('btnConfirm').disabled = true;
-            document.getElementById('btnConfirm').className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
-            document.getElementById('bookingModal').style.display = 'flex';
-        }
-
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridMonth',
-            locale: 'ko',
-            allDaySlot: false,
-            slotMinTime: '09:00:00',
-            slotMaxTime: '18:30:00',
+            initialView: 'dayGridMonth', locale: 'ko', allDaySlot: false, slotMinTime: '09:00:00', slotMaxTime: '18:30:00',
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,satView' },
-            customButtons: {
-                satView: {
-                    text: '토',
-                    click: function() {
-                        const current = calendar.getDate();
-                        const sat = new Date(current);
-                        sat.setDate(current.getDate() + (6 - current.getDay()));
-                        calendar.changeView('timeGridDay', sat);
-                    }
-                }
-            },
+            customButtons: { satView: { text: '토', click: function() { const current = calendar.getDate(); const sat = new Date(current); sat.setDate(current.getDate() + (6 - current.getDay())); calendar.changeView('timeGridDay', sat); } } },
             buttonText: { today: '오늘', month: '월', week: '주' },
-            dateClick: (info) => openBookingModal(info.date, info.view.type !== 'dayGridMonth' ? info.date : null),
+            dateClick: (info) => {
+                if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
+                const d = info.date;
+                currentDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
+                if (info.view.type !== 'dayGridMonth') {
+                    const hh = String(d.getHours()).padStart(2, '0');
+                    const mm = d.getMinutes() < 30 ? "00" : "30";
+                    if (modalTime.querySelector(`option[value="${hh}:${mm}"]`)) modalTime.value = `${hh}:${mm}`;
+                }
+                document.getElementById('agreeRules').checked = false;
+                document.getElementById('btnConfirm').disabled = true;
+                document.getElementById('bookingModal').style.display = 'flex';
+            },
             eventContent: (arg) => {
                 const nick = (arg.event.extendedProps.user || "").split('@')[0];
                 let cls = "bg-multi";
-                if(arg.event.title.includes("밴드")) cls = "bg-band";
-                else if(arg.event.title.includes("제빵")) cls = "bg-bread";
-                else if(arg.event.title.includes("공작")) cls = "bg-work";
-                else if(arg.event.title.includes("강의")) cls = "bg-study";
+                if(arg.event.title.includes("밴드")) cls = "bg-band"; else if(arg.event.title.includes("제빵")) cls = "bg-bread"; else if(arg.event.title.includes("공작")) cls = "bg-work"; else if(arg.event.title.includes("강의")) cls = "bg-study";
                 return { html: `<div class="event-chip ${cls}"><div>${arg.event.extendedProps.shortTime} ${arg.event.title}</div><div style="opacity:0.8;">[${nick}]</div></div>` };
             }
         });
@@ -188,21 +147,20 @@
         document.getElementById('btnConfirm').onclick = async () => {
             const email = auth.currentUser.email;
             const blackSnap = await getDocs(query(collection(db, "blacklist"), where("email", "==", email)));
-            if (!blackSnap.empty) return showToast("🚫 예약이 제한된 계정입니다.");
+            if (!blackSnap.empty) return showToast("🚫 예약 제한 계정입니다.");
 
             const time = document.getElementById('modalTime').value;
             const room = document.getElementById('modalRoom').value;
             const target = `${currentDay}T${time}`;
             const q = query(collection(db, "reservations"), where("time", "==", target), where("room", "==", room));
             const snap = await getDocs(q);
-            if (!snap.empty) return showToast("🚫 이미 예약된 시간입니다.");
+            if (!snap.empty) return showToast("🚫 이미 선점된 시간입니다.");
 
             await addDoc(collection(db, "reservations"), { user: email, room: room, time: target, shortTime: time });
-            showToast("✅ 예약 완료!");
-            document.getElementById('bookingModal').style.display = 'none';
+            showToast("✅ 예약 완료!"); document.getElementById('bookingModal').style.display = 'none';
         };
 
-        document.getElementById('btnAdminOpen').onclick = async () => {
+        const loadAdminData = async () => {
             const resSnap = await getDocs(collection(db, "reservations"));
             const list = document.getElementById('adminList');
             list.innerHTML = "";
@@ -212,10 +170,10 @@
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100";
                 div.innerHTML = `<div><div class="text-[10px] text-slate-400 font-bold">${d.time.split('T')[0]} ${d.shortTime}</div><div class="font-black text-slate-800">${d.room} <span class="text-indigo-500 text-xs">[${d.user.split('@')[0]}]</span></div></div>
-                                 <div class="flex gap-2"><button class="bg-red-50 text-red-500 px-3 py-2 rounded-xl text-xs font-black" onclick="deleteBooking('${d.id}')">취소</button>
-                                 <button class="bg-slate-900 text-white px-3 py-2 rounded-xl text-xs font-black" onclick="addToBlacklist('${d.user}')">차단</button></div>`;
+                                 <button class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-xs font-black" onclick="deleteBooking('${d.id}')">취소</button>`;
                 list.appendChild(div);
             });
+
             const blackSnap = await getDocs(collection(db, "blacklist"));
             const blackArea = document.getElementById('blackListArea');
             blackArea.innerHTML = "";
@@ -225,12 +183,20 @@
                 div.innerHTML = `<span>${s.data().email}</span><button onclick="removeFromBlacklist('${s.id}')" class="underline">해제</button>`;
                 blackArea.appendChild(div);
             });
-            document.getElementById('adminModal').style.display = 'flex';
         };
 
-        window.deleteBooking = async (id) => { if(confirm('삭제?')) { await deleteDoc(doc(db, "reservations", id)); document.getElementById('btnAdminOpen').click(); }};
-        window.addToBlacklist = async (email) => { if(confirm('차단?')) { await addDoc(collection(db, "blacklist"), { email }); document.getElementById('btnAdminOpen').click(); }};
-        window.removeFromBlacklist = async (id) => { if(confirm('해제?')) { await deleteDoc(doc(db, "blacklist", id)); document.getElementById('btnAdminOpen').click(); }};
+        document.getElementById('btnAdminOpen').onclick = () => { loadAdminData(); document.getElementById('adminModal').style.display = 'flex'; };
+        
+        document.getElementById('btnAddBlack').onclick = async () => {
+            const email = document.getElementById('blackEmailInput').value.trim();
+            if(!email) return;
+            await addDoc(collection(db, "blacklist"), { email });
+            document.getElementById('blackEmailInput').value = "";
+            showToast("차단 완료"); loadAdminData();
+        };
+
+        window.deleteBooking = async (id) => { if(confirm('예약을 취소하시겠습니까?')) { await deleteDoc(doc(db, "reservations", id)); loadAdminData(); }};
+        window.removeFromBlacklist = async (id) => { if(confirm('차단을 해제하시겠습니까?')) { await deleteDoc(doc(db, "blacklist", id)); loadAdminData(); }};
 
         document.getElementById('agreeRules').onchange = (e) => {
             const btn = document.getElementById('btnConfirm');
