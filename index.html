@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 예약 (v1.8.7)</title>
+    <title>무계행복마을학교 예약 (v1.8.9)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -31,7 +31,7 @@
 
     <div class="max-w-[1000px] mx-auto">
         <header class="flex justify-between items-center mb-4 px-2">
-            <div><h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1><p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.8.7)</p></div>
+            <div><h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1><p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.8.9)</p></div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자</button>
                 <div id="loginInfo" class="text-right hidden"><span id="userNick" class="text-[11px] font-black block text-slate-700"></span><button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button></div>
@@ -49,8 +49,16 @@
                 </div>
                 <div class="bg-slate-900 p-5 rounded-2xl mb-6 text-slate-300">
                     <h4 class="text-[12px] font-black text-emerald-400 mb-2">📋 필수 이용 수칙</h4>
-                    <ul class="text-[11px] space-y-1 mb-4 font-medium"><li>• 퇴실 시 전등 및 냉난방기 OFF</li><li>• 비품 정리 및 쓰레기 수거</li></ul>
-                    <label class="flex items-center gap-3 cursor-pointer pt-3 border-t border-slate-800"><input type="checkbox" id="agreeRules" class="w-5 h-5 accent-emerald-500"><span class="text-xs font-black text-white">수칙 준수 동의</span></label>
+                    <ul class="text-[11px] space-y-1 mb-4 font-medium">
+                        <li>• 퇴실 시 전등 및 냉난방기 OFF</li>
+                        <li>• 사용하신 비품은 제자리에 정리</li>
+                        <li>• 개인 쓰레기는 반드시 직접 수거</li>
+                        <li>• 시설 내 금연 및 음주 금지</li>
+                    </ul>
+                    <label class="flex items-center gap-3 cursor-pointer pt-3 border-t border-slate-800">
+                        <input type="checkbox" id="agreeRules" class="w-5 h-5 accent-emerald-500">
+                        <span class="text-xs font-black text-white">위 수칙을 준수함에 동의합니다.</span>
+                    </label>
                 </div>
                 <div class="flex gap-2"><button id="btnCloseBooking" class="flex-1 py-3 text-slate-400 font-bold">취소</button><button id="btnConfirm" disabled class="flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl">예약 확정</button></div>
             </div>
@@ -88,17 +96,22 @@
 
         function initTimeSlots() {
             const select = document.getElementById('modalTime'); select.innerHTML = "";
-            for (let h = 9; h <= 18; h++) { ['00', '30'].forEach(m => { if(h===18 && m==='30') return; const t = `${String(h).padStart(2, '0')}:${m}`; select.add(new Option(t, t)); }); }
+            // 운영 시간 오후 8시(20:00)까지 확장
+            for (let h = 9; h <= 20; h++) { 
+                ['00', '30'].forEach(m => { 
+                    if(h===20 && m==='30') return; 
+                    const t = `${String(h).padStart(2, '0')}:${m}`; 
+                    select.add(new Option(t, t)); 
+                }); 
+            }
         }
         initTimeSlots();
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-        // 중복 체크 로직 (복합 색인 없이 작동하도록 필터링 방식 변경)
         function checkReservedSlots() {
             const room = document.getElementById('modalRoom').value;
             const booked = allReservations.filter(r => r.date === currentDay && r.room === room).map(r => r.shortTime);
-            
             Array.from(document.getElementById('modalTime').options).forEach(opt => {
                 const isBooked = booked.includes(opt.value);
                 opt.disabled = isBooked;
@@ -115,6 +128,14 @@
             if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
             currentDay = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             if (holidayList.includes(currentDay)) { alert("오늘은 휴관일입니다."); return; }
+            
+            // 이용 수칙 체크 해제 및 버튼 비활성화 초기화
+            const checkbox = document.getElementById('agreeRules');
+            checkbox.checked = false;
+            const b = document.getElementById('btnConfirm');
+            b.disabled = true;
+            b.classList.replace('bg-emerald-600', 'bg-slate-200');
+
             document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약`;
             document.getElementById('bookingModal').style.display = 'flex';
             checkReservedSlots();
@@ -122,16 +143,19 @@
 
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth', locale: 'ko',
+            allDaySlot: false, // All-day 섹션 삭제
+            slotMinTime: '09:00:00', slotMaxTime: '21:00:00', // 화면 표시 시간 설정
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,dayView' },
             buttonText: { today: '오늘', month: '월', week: '주' },
             customButtons: { dayView: { text: '토', click: function() { 
-                const current = calendar.getDate(); const sat = new Date(current); sat.setDate(current.getDate() + (6 - current.getDay())); calendar.changeView('timeGridDay', sat); 
+                const current = calendar.getDate(); const sat = new Date(current); sat.setDate(current.getDate() + (6 - current.getDay())); 
+                calendar.changeView('timeGridDay', sat); 
             } } },
             dayCellClassNames: (arg) => {
                 const dStr = `${arg.date.getFullYear()}-${String(arg.date.getMonth() + 1).padStart(2, '0')}-${String(arg.date.getDate()).padStart(2, '0')}`;
                 return holidayList.includes(dStr) ? ['holiday-cell'] : [];
             },
-            dateClick: (info) => openBookingModal(info.date),
+            dateClick: (info) => openBookingModal(info.date), // 주/일 보기 빈 공간 클릭 시 작동
             eventClick: async (info) => { if (confirm('삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("삭제됨"); } },
             eventContent: (arg) => {
                 const nick = (arg.event.extendedProps.user || "").split('@')[0];
@@ -141,6 +165,7 @@
             }
         });
 
+        // 관리자 UI 업데이트 및 이벤트 리스너 (기존 로직 유지)
         const updateAdminUI = () => {
             const list = document.getElementById('adminList'); list.innerHTML = allReservations.length === 0 ? "예약 없음" : "";
             [...allReservations].sort((a,b) => b.time.localeCompare(a.time)).forEach(d => {
@@ -149,7 +174,7 @@
                 list.appendChild(div);
             });
             const hArea = document.getElementById('holidayListArea'); hArea.innerHTML = "";
-            holidayList.forEach((date, index) => {
+            holidayList.forEach((date) => {
                 const div = document.createElement('div'); div.className = "bg-red-100 text-red-600 px-2 py-1 rounded-full text-[10px] flex items-center gap-1 font-bold";
                 div.innerHTML = `${date}<button onclick="removeHolidayByDate('${date}')">×</button>`;
                 hArea.appendChild(div);
@@ -189,7 +214,7 @@
         document.getElementById('btnCloseAdmin').onclick = () => document.getElementById('adminModal').style.display = 'none';
         document.getElementById('btnLoginEmail').onclick = () => {
             const e = document.getElementById('authEmail').value, p = document.getElementById('authPw').value;
-            signInWithEmailAndPassword(auth, e, p).catch(err => alert("로그인 실패: " + err.message));
+            signInWithEmailAndPassword(auth, e, p).catch(err => alert("로그인 실패"));
         };
         document.getElementById('btnLogout').onclick = () => signOut(auth);
         document.getElementById('agreeRules').onchange = (e) => {
