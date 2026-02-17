@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.4.5)</title>
+    <title>무계행복마을학교 시설 예약 (v1.4.6)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -35,11 +35,14 @@
         <header class="flex justify-between items-center mb-4 px-1">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.4.5)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.4.6)</p>
             </div>
-            <div id="loginInfo" class="hidden text-right">
-                <span id="userNick" class="text-[11px] font-black block text-slate-700"></span>
-                <button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button>
+            <div class="flex gap-2 items-center">
+                <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
+                <div id="loginInfo" class="text-right hidden">
+                    <span id="userNick" class="text-[11px] font-black block text-slate-700"></span>
+                    <button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button>
+                </div>
             </div>
         </header>
 
@@ -83,12 +86,20 @@
             </div>
         </div>
 
+        <div id="adminModal" class="modal-overlay">
+            <div class="modal-content w-[95%] bg-slate-50 max-w-2xl p-6 rounded-[30px] shadow-2xl max-h-[85vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-black text-xl text-indigo-950">운영 대시보드</h3>
+                    <button onclick="document.getElementById('adminModal').style.display='none'" class="text-slate-400 font-bold">닫기</button>
+                </div>
+                <div id="adminList" class="space-y-2 mb-8"></div>
+            </div>
+        </div>
+
         <div id="authModal" class="modal-overlay">
             <div class="modal-content w-[90%] bg-white max-w-sm p-8 rounded-[30px] shadow-2xl text-center">
                 <h3 class="font-black text-xl mb-6">마을학교 로그인</h3>
-                <button id="btnGoogle" class="w-full py-3 mb-4 border-2 rounded-xl font-bold flex justify-center items-center gap-2">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">구글 로그인
-                </button>
+                <button id="btnGoogle" class="w-full py-3 mb-4 border-2 rounded-xl font-bold flex justify-center items-center gap-2"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18">구글 로그인</button>
             </div>
         </div>
     </div>
@@ -97,13 +108,15 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8", authDomain: "muge-43e73.firebaseapp.com", projectId: "muge-43e73", storageBucket: "muge-43e73.firebasestorage.app", messagingSenderId: "356856775293", appId: "1:356856775293:web:7ad8abaf66febd0a9be714" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
+        const ADMIN_EMAILS = ["442qkrrk@gmail.com", "nyamachoma@naver.com"];
+        const isAdmin = (email) => ADMIN_EMAILS.includes(email);
 
         let currentDay = "";
         const modalTime = document.getElementById('modalTime');
@@ -113,21 +126,16 @@
 
         function openBookingModal(date) {
             if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
-            
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             currentDay = `${year}-${month}-${day}`;
-
             document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
             
-            // [수정] 모달 열 때 체크박스 초기화 및 버튼 비활성화
-            const agreeCheck = document.getElementById('agreeRules');
-            const confirmBtn = document.getElementById('btnConfirm');
-            agreeCheck.checked = false; 
-            confirmBtn.disabled = true;
-            confirmBtn.className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
-            
+            // 초기화
+            document.getElementById('agreeRules').checked = false;
+            document.getElementById('btnConfirm').disabled = true;
+            document.getElementById('btnConfirm').className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
             document.getElementById('bookingModal').style.display = 'flex';
         }
 
@@ -164,24 +172,34 @@
             }
         });
 
+        // 예약 확정
         document.getElementById('btnConfirm').onclick = async () => {
             const timeVal = document.getElementById('modalTime').value;
             const roomVal = document.getElementById('modalRoom').value;
             const finalTime = `${currentDay}T${timeVal}`;
-
             const q = query(collection(db, "reservations"), where("time", "==", finalTime), where("room", "==", roomVal));
             const snap = await getDocs(q);
             if (!snap.empty) { showToast("🚫 이미 예약된 시간입니다."); return; }
-
-            await addDoc(collection(db, "reservations"), {
-                user: auth.currentUser.email,
-                room: roomVal,
-                time: finalTime,
-                shortTime: timeVal
-            });
-            
+            await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room: roomVal, time: finalTime, shortTime: timeVal });
             showToast("✅ 예약 완료!");
             document.getElementById('bookingModal').style.display = 'none';
+        };
+
+        // 관리자 모달 열기
+        document.getElementById('btnAdminOpen').onclick = async () => {
+            const snap = await getDocs(collection(db, "reservations"));
+            const list = document.getElementById('adminList');
+            list.innerHTML = "";
+            const sorted = [];
+            snap.forEach(s => sorted.push({id: s.id, ...s.data()}));
+            sorted.sort((a,b) => a.time.localeCompare(b.time)).forEach(d => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100";
+                div.innerHTML = `<div><div class="text-[10px] text-slate-400 font-bold">${d.time.split('T')[0]} ${d.shortTime}</div><div class="font-black text-slate-800">${d.room} <span class="text-indigo-500 text-xs">[${d.user.split('@')[0]}]</span></div></div><button class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-xs font-black">취소</button>`;
+                div.querySelector('button').onclick = async () => { if(confirm('삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", d.id)); showToast("삭제됨"); div.remove(); } };
+                list.appendChild(div);
+            });
+            document.getElementById('adminModal').style.display = 'flex';
         };
 
         document.getElementById('agreeRules').onchange = (e) => {
@@ -192,22 +210,21 @@
 
         onSnapshot(collection(db, "reservations"), (snap) => {
             const evs = [];
-            snap.forEach(s => { 
-                const d = s.data(); 
-                evs.push({ id: s.id, title: d.room, start: d.time, extendedProps: { shortTime: d.shortTime, user: d.user } }); 
-            });
+            snap.forEach(s => { const d = s.data(); evs.push({ id: s.id, title: d.room, start: d.time, extendedProps: { shortTime: d.shortTime, user: d.user } }); });
             calendar.removeAllEvents(); calendar.addEventSource(evs);
         });
 
         onAuthStateChanged(auth, (u) => {
             document.getElementById('authModal').style.display = u ? 'none' : 'flex';
             document.getElementById('loginInfo').classList.toggle('hidden', !u);
-            if(u) document.getElementById('userNick').innerText = u.email.split('@')[0] + "님";
+            if(u) {
+                document.getElementById('userNick').innerText = u.email.split('@')[0] + "님";
+                if(isAdmin(u.email)) document.getElementById('btnAdminOpen').classList.remove('hidden');
+            }
         });
 
         document.getElementById('btnGoogle').onclick = () => signInWithPopup(auth, provider);
         document.getElementById('btnLogout').onclick = () => signOut(auth);
-
         calendar.render();
     </script>
 </body>
