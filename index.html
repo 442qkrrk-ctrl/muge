@@ -3,28 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.5.6)</title>
+    <title>무계행복마을학교 시설 예약 (v1.5.8)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; color: #1e293b; -webkit-tap-highlight-color: transparent; }
-        .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 10px 5px !important; }
-        .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 900 !important; color: #065f46; }
-        .fc-button { padding: 6px 10px !important; font-size: 0.8rem !important; font-weight: 800 !important; border-radius: 10px !important; }
+        
+        /* 세로 짤림 방지 핵심: 고정 높이 제거 및 스크롤 최적화 */
+        #calendar-container { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 100%; margin-bottom: 50px; }
+        .fc-scroller { height: auto !important; overflow: hidden !important; } /* 내부 스크롤 박스 해제 */
+        .fc-timegrid-slot { height: 40px !important; } /* 시간 칸 높이 최적화 (너무 길지 않게) */
+
+        .fc-header-toolbar { display: flex !important; flex-wrap: wrap; justify-content: space-between !important; padding: 5px !important; gap: 5px; }
+        .fc-toolbar-title { font-size: 1.0rem !important; font-weight: 900 !important; color: #065f46; }
+        .fc-button { padding: 4px 8px !important; font-size: 0.75rem !important; font-weight: 800 !important; border-radius: 8px !important; }
         .fc-button-primary { background-color: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #475569 !important; }
         .fc-button-active { background-color: #10b981 !important; color: white !important; border-color: #10b981 !important; }
+        
         .fc-day-sat { background-color: #eff6ff !important; } 
-        /* 날짜 클릭 가능하게 스타일 수정 */
-        .fc .fc-col-header-cell-cushion { cursor: pointer; padding: 8px 4px !important; display: block; width: 100%; }
-        .event-chip { font-size: 10px; padding: 4px; border-radius: 6px; color: white; font-weight: 700; width: 100%; overflow: hidden; text-overflow: ellipsis; }
+        .fc .fc-col-header-cell-cushion { cursor: pointer; padding: 8px 0 !important; display: block; width: 100%; font-size: 0.8rem; }
+        
+        .event-chip { font-size: 10px; padding: 4px; border-radius: 6px; color: white; font-weight: 700; width: 100%; }
         .bg-band { background-color: #10b981 !important; } .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; } .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
-        #calendar { background: white; border-radius: 20px; padding: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); min-height: 500px; width: 100%; }
+
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; }
-        #toast { visibility: hidden; min-width: 200px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 12px; position: fixed; z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; font-size: 13px; }
+        #toast { visibility: hidden; min-width: 200px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 12px; position: fixed; z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
@@ -33,13 +40,13 @@
 <body class="p-2 md:p-8">
 
     <div class="max-w-[1000px] mx-auto">
-        <header class="flex justify-between items-center mb-4 px-1">
+        <header class="flex justify-between items-center mb-4 px-2">
             <div>
                 <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.6)</p>
+                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.5.8)</p>
             </div>
             <div class="flex gap-2 items-center">
-                <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자 모드</button>
+                <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자</button>
                 <div id="loginInfo" class="text-right hidden">
                     <span id="userNick" class="text-[11px] font-black block text-slate-700"></span>
                     <button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button>
@@ -47,7 +54,9 @@
             </div>
         </header>
 
-        <div id="calendar"></div>
+        <div id="calendar-container">
+            <div id="calendar"></div>
+        </div>
 
         <div id="bookingModal" class="modal-overlay">
             <div class="modal-content w-[95%] bg-white max-w-sm p-6 rounded-[30px] shadow-2xl">
@@ -58,8 +67,8 @@
                 </div>
                 <div class="bg-slate-900 p-5 rounded-2xl mb-6 shadow-xl">
                     <h4 class="text-[12px] font-black text-emerald-400 mb-2">📋 필수 이용 수칙</h4>
-                    <ul class="text-[13px] text-slate-300 space-y-1 font-medium mb-4"><li>• 퇴실 시 전등 및 냉난방기를 반드시 끕니다.</li><li>• 사용한 비품은 제자리에, 쓰레기는 수거합니다.</li><li>• 시설 훼손 시 원상 복구의 책임이 있습니다.</li></ul>
-                    <label class="flex items-center gap-3 cursor-pointer pt-3 border-t border-slate-800"><input type="checkbox" id="agreeRules" class="w-5 h-5 accent-emerald-500"><span class="text-xs font-black text-white">수칙을 모두 확인했으며 준수하겠습니다.</span></label>
+                    <ul class="text-[13px] text-slate-300 space-y-1 font-medium mb-4"><li>• 퇴실 시 전등 및 냉난방기 OFF</li><li>• 비품 정리 및 쓰레기 수거</li><li>• 시설 훼손 시 원상 복구 책임</li></ul>
+                    <label class="flex items-center gap-3 cursor-pointer pt-3 border-t border-slate-800"><input type="checkbox" id="agreeRules" class="w-5 h-5 accent-emerald-500"><span class="text-xs font-black text-white">수칙을 확인했으며 준수하겠습니다.</span></label>
                 </div>
                 <div class="flex gap-2">
                     <button onclick="document.getElementById('bookingModal').style.display='none'" class="flex-1 py-3 text-slate-400 font-bold">취소</button>
@@ -103,16 +112,11 @@
             if (!auth.currentUser) { document.getElementById('authModal').style.display='flex'; return; }
             currentDay = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약 신청`;
-            
-            // 헤더(날짜/요일) 클릭 시에는 시간을 기본 09:00으로, 칸 클릭 시에는 해당 시간으로
             if (!fromHeader) {
                 const hh = String(date.getHours()).padStart(2, '0');
                 const mm = date.getMinutes() < 30 ? "00" : "30";
                 if (modalTime.querySelector(`option[value="${hh}:${mm}"]`)) modalTime.value = `${hh}:${mm}`;
-            } else {
-                modalTime.value = "09:00";
-            }
-            
+            } else { modalTime.value = "09:00"; }
             document.getElementById('agreeRules').checked = false;
             document.getElementById('btnConfirm').disabled = true;
             document.getElementById('btnConfirm').className = "flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl";
@@ -121,9 +125,8 @@
 
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth', locale: 'ko', allDaySlot: false, slotMinTime: '09:00:00', slotMaxTime: '18:30:00',
-            selectable: true, 
-            navLinks: true, // 날짜/요일 클릭 활성화
-            navLinkDayClick: (date) => { openBookingModal(date, true); }, // 상단 날짜 클릭 시 동작
+            selectable: true, navLinks: true, contentHeight: 'auto', // 세로 자동 조절
+            navLinkDayClick: (date) => openBookingModal(date, true),
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,satView' },
             customButtons: { satView: { text: '토', click: function() { const current = calendar.getDate(); const sat = new Date(current); sat.setDate(current.getDate() + (6 - current.getDay())); calendar.changeView('timeGridDay', sat); } } },
             buttonText: { today: '오늘', month: '월', week: '주' },
@@ -146,10 +149,9 @@
             const target = `${currentDay}T${time}`;
             const q = query(collection(db, "reservations"), where("time", "==", target), where("room", "==", room));
             const snap = await getDocs(q);
-            if (!snap.empty) return showToast("🚫 이미 선점된 시간입니다.");
+            if (!snap.empty) return showToast("🚫 이미 예약된 시간입니다.");
             await addDoc(collection(db, "reservations"), { user: email, room: room, time: target, shortTime: time });
-            showToast("✅ 예약 완료!");
-            document.getElementById('bookingModal').style.display = 'none';
+            showToast("✅ 예약 완료!"); document.getElementById('bookingModal').style.display = 'none';
         };
 
         const loadAdminData = async () => {
