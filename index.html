@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 예약 (v1.9.2)</title>
+    <title>무계행복마을학교 예약 (v1.9.4)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -32,7 +32,7 @@
 
     <div class="max-w-[1000px] mx-auto">
         <header class="flex justify-between items-center mb-4 px-2">
-            <div><h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1><p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.9.2)</p></div>
+            <div><h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1><p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.9.4)</p></div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자</button>
                 <div id="loginInfo" class="text-right hidden"><span id="userNick" class="text-[11px] font-black block text-slate-700"></span><button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button></div>
@@ -45,8 +45,14 @@
             <div class="modal-content w-[95%] bg-white max-w-sm p-6 rounded-[30px] shadow-2xl">
                 <h3 id="modalDateDisplay" class="font-black text-lg text-center mb-6 text-slate-800">예약 신청</h3>
                 <div class="space-y-4 mb-6">
-                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label><select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"><option value="밴드실">🎸 밴드실</option><option value="제빵실">🍞 제빵실</option><option value="공작실">🔨 공작실</option><option value="강의실">📖 강의실</option><option value="다목적실">✨ 다목적실</option></select></div>
-                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택 (2시간 단위 중복)</label><select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"></select></div>
+                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label>
+                        <select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none">
+                            <option value="밴드실">🎸 밴드실</option><option value="제빵실">🍞 제빵실</option><option value="공작실">🔨 공작실</option><option value="강의실">📖 강의실</option><option value="다목적실">✨ 다목적실</option>
+                        </select>
+                    </div>
+                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택 (해당 실 2시간 중복 체크)</label>
+                        <select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"></select>
+                    </div>
                 </div>
                 <div class="bg-slate-900 p-5 rounded-2xl mb-6 text-slate-300">
                     <h4 class="text-[12px] font-black text-emerald-400 mb-2">📋 필수 이용 수칙</h4>
@@ -61,15 +67,6 @@
                     </label>
                 </div>
                 <div class="flex gap-2"><button id="btnCloseBooking" class="flex-1 py-3 text-slate-400 font-bold">취소</button><button id="btnConfirm" disabled class="flex-[2] py-3 bg-slate-200 text-white font-black rounded-xl">예약 확정</button></div>
-            </div>
-        </div>
-
-        <div id="adminModal" class="modal-overlay">
-            <div class="modal-content w-[95%] bg-slate-50 max-w-2xl p-6 rounded-[30px] shadow-2xl max-h-[85vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-6"><h3 class="font-black text-xl text-indigo-950">운영 관리</h3><button id="btnCloseAdmin" class="text-slate-400 font-bold">닫기</button></div>
-                <section class="mb-8 p-4 bg-white rounded-2xl border"><h4 class="font-black text-sm mb-3 text-red-600">🗓 휴관일 설정</h4><div class="flex gap-2 mb-3"><input type="date" id="holidayDateInput" class="flex-1 p-3 border-2 border-slate-50 rounded-xl text-xs outline-none"><button id="btnAddHoliday" class="bg-red-500 text-white px-4 py-3 rounded-xl text-xs font-black shadow-md">등록</button></div><div id="holidayListArea" class="flex flex-wrap gap-2"></div></section>
-                <section class="mb-8 p-4 bg-white rounded-2xl border"><h4 class="font-black text-sm mb-3 text-slate-800">🚫 블랙리스트 관리</h4><div class="flex gap-2 mb-3"><input type="email" id="blackEmailInput" placeholder="이메일" class="flex-1 p-3 border-2 border-slate-50 rounded-xl text-xs outline-none"><button id="btnAddBlack" class="bg-slate-900 text-white px-4 py-3 rounded-xl text-xs font-black shadow-md">차단</button></div><div id="blackListArea" class="space-y-1"></div></section>
-                <section><h4 class="font-black text-sm mb-3 text-indigo-600">📝 전체 예약 현황</h4><div id="adminList" class="space-y-2 text-xs bg-white p-3 rounded-2xl border max-h-60 overflow-y-auto"></div></section>
             </div>
         </div>
 
@@ -88,6 +85,15 @@
                 <button id="btnLoginGoogle" class="w-full py-3 border-2 border-slate-100 rounded-xl font-black text-slate-700 flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18"> 구글로 시작하기
                 </button>
+            </div>
+        </div>
+
+        <div id="adminModal" class="modal-overlay">
+            <div class="modal-content w-[95%] bg-slate-50 max-w-2xl p-6 rounded-[30px] shadow-2xl max-h-[85vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6"><h3 class="font-black text-xl text-indigo-950">운영 관리</h3><button id="btnCloseAdmin" class="text-slate-400 font-bold">닫기</button></div>
+                <section class="mb-8 p-4 bg-white rounded-2xl border"><h4 class="font-black text-sm mb-3 text-red-600">🗓 휴관일 설정</h4><div class="flex gap-2 mb-3"><input type="date" id="holidayDateInput" class="flex-1 p-3 border-2 border-slate-50 rounded-xl text-xs outline-none"><button id="btnAddHoliday" class="bg-red-500 text-white px-4 py-3 rounded-xl text-xs font-black shadow-md">등록</button></div><div id="holidayListArea" class="flex flex-wrap gap-2"></div></section>
+                <section class="mb-8 p-4 bg-white rounded-2xl border"><h4 class="font-black text-sm mb-3 text-slate-800">🚫 블랙리스트 관리</h4><div class="flex gap-2 mb-3"><input type="email" id="blackEmailInput" placeholder="이메일" class="flex-1 p-3 border-2 border-slate-50 rounded-xl text-xs outline-none"><button id="btnAddBlack" class="bg-slate-900 text-white px-4 py-3 rounded-xl text-xs font-black shadow-md">차단</button></div><div id="blackListArea" class="space-y-1"></div></section>
+                <section><h4 class="font-black text-sm mb-3 text-indigo-600">📝 전체 예약 현황</h4><div id="adminList" class="space-y-2 text-xs bg-white p-3 rounded-2xl border max-h-60 overflow-y-auto"></div></section>
             </div>
         </div>
     </div>
@@ -119,13 +125,16 @@
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
+        // [중요 수정] 선택한 '시설(Room)' 내에서만 2시간 중복을 확인하도록 로직 정교화
         function checkConflict(room, date, shortTime) {
             const selectedTime = new Date(`${date}T${shortTime}:00`);
             return allReservations.some(r => {
-                if (r.date !== date || r.room !== room) return false;
-                const reservedTime = new Date(`${r.date}T${r.shortTime}:00`);
-                const diff = Math.abs(selectedTime - reservedTime) / (1000 * 60 * 60);
-                return diff < 2;
+                if (r.date === date && r.room === room) { // 날짜와 실이 같을 때만 검사
+                    const reservedTime = new Date(`${r.date}T${r.shortTime}:00`);
+                    const diff = Math.abs(selectedTime - reservedTime) / (1000 * 60 * 60);
+                    return diff < 1.99; // 약 2시간 간격 보호
+                }
+                return false;
             });
         }
 
@@ -160,8 +169,7 @@
         }
 
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-            initialView: 'dayGridMonth', locale: 'ko',
-            allDaySlot: false, navLinks: true,
+            initialView: 'dayGridMonth', locale: 'ko', allDaySlot: false, navLinks: true,
             slotMinTime: '09:00:00', slotMaxTime: '21:00:00',
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,dayView' },
             buttonText: { today: '오늘', month: '월', week: '주' },
@@ -175,7 +183,7 @@
                 return holidayList.includes(dStr) ? ['holiday-cell'] : [];
             },
             dateClick: (info) => openBookingModal(info.date),
-            eventClick: async (info) => { if (confirm('삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("삭제됨"); } },
+            eventClick: async (info) => { if (confirm('예약을 삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("삭제됨"); } },
             eventContent: (arg) => {
                 const nick = (arg.event.extendedProps.user || "").split('@')[0];
                 let cls = "bg-multi";
@@ -184,7 +192,6 @@
             }
         });
 
-        // 관리자 UI 및 제어 함수
         const updateAdminUI = () => {
             const list = document.getElementById('adminList'); list.innerHTML = allReservations.length === 0 ? "예약 없음" : "";
             [...allReservations].sort((a,b) => b.time.localeCompare(a.time)).forEach(d => {
@@ -223,13 +230,12 @@
         document.getElementById('btnConfirm').onclick = async () => {
             if(blackList.includes(auth.currentUser.email)) return alert("차단된 사용자입니다.");
             const room = document.getElementById('modalRoom').value, shortTime = document.getElementById('modalTime').value;
-            if(checkConflict(room, currentDay, shortTime)) return alert("2시간 이내에 다른 예약이 있습니다.");
+            if(checkConflict(room, currentDay, shortTime)) return alert("해당 시설에 2시간 이내 예약이 이미 존재합니다.");
             await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, date: currentDay, time: `${currentDay}T${shortTime}`, shortTime });
             document.getElementById('bookingModal').style.display = 'none'; showToast("예약 완료!");
         };
 
-        // 인증 로직
-        document.getElementById('btnLoginGoogle').onclick = () => signInWithPopup(auth, provider).catch(err => alert("구글 로그인 실패"));
+        document.getElementById('btnLoginGoogle').onclick = () => signInWithPopup(auth, provider).catch(err => alert("로그인 실패"));
         document.getElementById('btnLoginEmail').onclick = () => {
             const e = document.getElementById('authEmail').value, p = document.getElementById('authPw').value;
             signInWithEmailAndPassword(auth, e, p).catch(err => alert("로그인 실패"));
