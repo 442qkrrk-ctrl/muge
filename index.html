@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 예약 (v1.8.9)</title>
+    <title>무계행복마을학교 예약 (v1.9.0)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -31,7 +31,7 @@
 
     <div class="max-w-[1000px] mx-auto">
         <header class="flex justify-between items-center mb-4 px-2">
-            <div><h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1><p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.8.9)</p></div>
+            <div><h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1><p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.9.0)</p></div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자</button>
                 <div id="loginInfo" class="text-right hidden"><span id="userNick" class="text-[11px] font-black block text-slate-700"></span><button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button></div>
@@ -45,7 +45,7 @@
                 <h3 id="modalDateDisplay" class="font-black text-lg text-center mb-6 text-slate-800">예약 신청</h3>
                 <div class="space-y-4 mb-6">
                     <div><label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label><select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"><option value="밴드실">🎸 밴드실</option><option value="제빵실">🍞 제빵실</option><option value="공작실">🔨 공작실</option><option value="강의실">📖 강의실</option><option value="다목적실">✨ 다목적실</option></select></div>
-                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택</label><select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"></select></div>
+                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택 (2시간 단위 중복 체크)</label><select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"></select></div>
                 </div>
                 <div class="bg-slate-900 p-5 rounded-2xl mb-6 text-slate-300">
                     <h4 class="text-[12px] font-black text-emerald-400 mb-2">📋 필수 이용 수칙</h4>
@@ -53,7 +53,6 @@
                         <li>• 퇴실 시 전등 및 냉난방기 OFF</li>
                         <li>• 사용하신 비품은 제자리에 정리</li>
                         <li>• 개인 쓰레기는 반드시 직접 수거</li>
-                        <li>• 시설 내 금연 및 음주 금지</li>
                     </ul>
                     <label class="flex items-center gap-3 cursor-pointer pt-3 border-t border-slate-800">
                         <input type="checkbox" id="agreeRules" class="w-5 h-5 accent-emerald-500">
@@ -96,26 +95,31 @@
 
         function initTimeSlots() {
             const select = document.getElementById('modalTime'); select.innerHTML = "";
-            // 운영 시간 오후 8시(20:00)까지 확장
             for (let h = 9; h <= 20; h++) { 
-                ['00', '30'].forEach(m => { 
-                    if(h===20 && m==='30') return; 
-                    const t = `${String(h).padStart(2, '0')}:${m}`; 
-                    select.add(new Option(t, t)); 
-                }); 
+                ['00', '30'].forEach(m => { if(h===20 && m==='30') return; const t = `${String(h).padStart(2, '0')}:${m}`; select.add(new Option(t, t)); }); 
             }
         }
         initTimeSlots();
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
+        // 2시간 단위 중복 체크 로직
+        function checkConflict(room, date, shortTime) {
+            const selectedTime = new Date(`${date}T${shortTime}:00`);
+            return allReservations.some(r => {
+                if (r.date !== date || r.room !== room) return false;
+                const reservedTime = new Date(`${r.date}T${r.shortTime}:00`);
+                const diff = Math.abs(selectedTime - reservedTime) / (1000 * 60 * 60); // 시간 차이 계산
+                return diff < 2; // 2시간 미만이면 중복으로 간주
+            });
+        }
+
         function checkReservedSlots() {
             const room = document.getElementById('modalRoom').value;
-            const booked = allReservations.filter(r => r.date === currentDay && r.room === room).map(r => r.shortTime);
             Array.from(document.getElementById('modalTime').options).forEach(opt => {
-                const isBooked = booked.includes(opt.value);
-                opt.disabled = isBooked;
-                opt.text = isBooked ? `${opt.value} (예약됨)` : opt.value;
+                const isConflicted = checkConflict(room, currentDay, opt.value);
+                opt.disabled = isConflicted;
+                opt.text = isConflicted ? `${opt.value} (예약불가-2H)` : opt.value;
             });
             const select = document.getElementById('modalTime');
             if (select.selectedOptions[0]?.disabled) {
@@ -129,9 +133,7 @@
             currentDay = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             if (holidayList.includes(currentDay)) { alert("오늘은 휴관일입니다."); return; }
             
-            // 이용 수칙 체크 해제 및 버튼 비활성화 초기화
-            const checkbox = document.getElementById('agreeRules');
-            checkbox.checked = false;
+            document.getElementById('agreeRules').checked = false;
             const b = document.getElementById('btnConfirm');
             b.disabled = true;
             b.classList.replace('bg-emerald-600', 'bg-slate-200');
@@ -143,8 +145,8 @@
 
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
             initialView: 'dayGridMonth', locale: 'ko',
-            allDaySlot: false, // All-day 섹션 삭제
-            slotMinTime: '09:00:00', slotMaxTime: '21:00:00', // 화면 표시 시간 설정
+            allDaySlot: false,
+            slotMinTime: '09:00:00', slotMaxTime: '21:00:00',
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,dayView' },
             buttonText: { today: '오늘', month: '월', week: '주' },
             customButtons: { dayView: { text: '토', click: function() { 
@@ -155,7 +157,7 @@
                 const dStr = `${arg.date.getFullYear()}-${String(arg.date.getMonth() + 1).padStart(2, '0')}-${String(arg.date.getDate()).padStart(2, '0')}`;
                 return holidayList.includes(dStr) ? ['holiday-cell'] : [];
             },
-            dateClick: (info) => openBookingModal(info.date), // 주/일 보기 빈 공간 클릭 시 작동
+            dateClick: (info) => openBookingModal(info.date),
             eventClick: async (info) => { if (confirm('삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("삭제됨"); } },
             eventContent: (arg) => {
                 const nick = (arg.event.extendedProps.user || "").split('@')[0];
@@ -165,7 +167,6 @@
             }
         });
 
-        // 관리자 UI 업데이트 및 이벤트 리스너 (기존 로직 유지)
         const updateAdminUI = () => {
             const list = document.getElementById('adminList'); list.innerHTML = allReservations.length === 0 ? "예약 없음" : "";
             [...allReservations].sort((a,b) => b.time.localeCompare(a.time)).forEach(d => {
@@ -204,7 +205,7 @@
         document.getElementById('btnConfirm').onclick = async () => {
             if(blackList.includes(auth.currentUser.email)) return alert("차단된 사용자입니다.");
             const room = document.getElementById('modalRoom').value, shortTime = document.getElementById('modalTime').value;
-            if(allReservations.some(r => r.date === currentDay && r.room === room && r.shortTime === shortTime)) return alert("이미 예약된 시간입니다.");
+            if(checkConflict(room, currentDay, shortTime)) return alert("2시간 이내에 다른 예약이 있습니다.");
             await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, date: currentDay, time: `${currentDay}T${shortTime}`, shortTime });
             document.getElementById('bookingModal').style.display = 'none'; showToast("예약 완료!");
         };
