@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>무계행복마을학교 시설 예약 (v1.8.6)</title>
+    <title>무계행복마을학교 예약 (v1.8.7)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -31,16 +31,10 @@
 
     <div class="max-w-[1000px] mx-auto">
         <header class="flex justify-between items-center mb-4 px-2">
-            <div>
-                <h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1>
-                <p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.8.6)</p>
-            </div>
+            <div><h1 class="text-xl font-black text-emerald-900">무계행복마을학교</h1><p class="text-[10px] font-bold text-emerald-600 tracking-tighter">시설 예약 시스템 (v1.8.7)</p></div>
             <div class="flex gap-2 items-center">
                 <button id="btnAdminOpen" class="hidden text-[10px] bg-indigo-600 text-white px-3 py-2 rounded-xl font-black shadow-lg">관리자</button>
-                <div id="loginInfo" class="text-right hidden">
-                    <span id="userNick" class="text-[11px] font-black block text-slate-700"></span>
-                    <button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button>
-                </div>
+                <div id="loginInfo" class="text-right hidden"><span id="userNick" class="text-[11px] font-black block text-slate-700"></span><button id="btnLogout" class="text-[10px] text-red-400 font-bold">로그아웃</button></div>
             </div>
         </header>
 
@@ -50,17 +44,8 @@
             <div class="modal-content w-[95%] bg-white max-w-sm p-6 rounded-[30px] shadow-2xl">
                 <h3 id="modalDateDisplay" class="font-black text-lg text-center mb-6 text-slate-800">예약 신청</h3>
                 <div class="space-y-4 mb-6">
-                    <div>
-                        <label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label>
-                        <select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none">
-                            <option value="밴드실">🎸 밴드실</option><option value="제빵실">🍞 제빵실</option>
-                            <option value="공작실">🔨 공작실</option><option value="강의실">📖 강의실</option><option value="다목적실">✨ 다목적실</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택</label>
-                        <select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"></select>
-                    </div>
+                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시설 선택</label><select id="modalRoom" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"><option value="밴드실">🎸 밴드실</option><option value="제빵실">🍞 제빵실</option><option value="공작실">🔨 공작실</option><option value="강의실">📖 강의실</option><option value="다목적실">✨ 다목적실</option></select></div>
+                    <div><label class="text-[14px] font-bold text-slate-400 ml-1">시간 선택</label><select id="modalTime" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"></select></div>
                 </div>
                 <div class="bg-slate-900 p-5 rounded-2xl mb-6 text-slate-300">
                     <h4 class="text-[12px] font-black text-emerald-400 mb-2">📋 필수 이용 수칙</h4>
@@ -74,24 +59,14 @@
         <div id="adminModal" class="modal-overlay">
             <div class="modal-content w-[95%] bg-slate-50 max-w-2xl p-6 rounded-[30px] shadow-2xl max-h-[85vh] overflow-y-auto">
                 <div class="flex justify-between items-center mb-6"><h3 class="font-black text-xl text-indigo-950">운영 관리</h3><button id="btnCloseAdmin" class="text-slate-400 font-bold">닫기</button></div>
-                
-                <section class="mb-8 p-4 bg-white rounded-2xl border">
-                    <h4 class="font-black text-sm mb-3 text-red-600">🗓 휴관일 설정</h4>
-                    <div class="flex gap-2 mb-3"><input type="date" id="holidayDateInput" class="flex-1 p-3 border-2 border-slate-50 rounded-xl text-xs outline-none"><button id="btnAddHoliday" class="bg-red-500 text-white px-4 py-3 rounded-xl text-xs font-black shadow-md">등록</button></div>
-                    <div id="holidayListArea" class="flex flex-wrap gap-2"></div>
-                </section>
-
-                <section class="mb-8 p-4 bg-white rounded-2xl border">
-                    <h4 class="font-black text-sm mb-3 text-slate-800">🚫 블랙리스트 관리</h4>
-                    <div class="flex gap-2 mb-3"><input type="email" id="blackEmailInput" placeholder="차단할 이메일" class="flex-1 p-3 border-2 border-slate-50 rounded-xl text-xs outline-none"><button id="btnAddBlack" class="bg-slate-900 text-white px-4 py-3 rounded-xl text-xs font-black shadow-md">차단</button></div>
-                    <div id="blackListArea" class="space-y-1"></div>
-                </section>
-
-                <section>
-                    <h4 class="font-black text-sm mb-3 text-indigo-600">📝 전체 예약 현황</h4>
-                    <div id="adminList" class="space-y-2 text-xs bg-white p-3 rounded-2xl border max-h-60 overflow-y-auto"></div>
-                </section>
+                <section class="mb-8 p-4 bg-white rounded-2xl border"><h4 class="font-black text-sm mb-3 text-red-600">🗓 휴관일 설정</h4><div class="flex gap-2 mb-3"><input type="date" id="holidayDateInput" class="flex-1 p-3 border-2 border-slate-50 rounded-xl text-xs outline-none"><button id="btnAddHoliday" class="bg-red-500 text-white px-4 py-3 rounded-xl text-xs font-black shadow-md">등록</button></div><div id="holidayListArea" class="flex flex-wrap gap-2"></div></section>
+                <section class="mb-8 p-4 bg-white rounded-2xl border"><h4 class="font-black text-sm mb-3 text-slate-800">🚫 블랙리스트 관리</h4><div class="flex gap-2 mb-3"><input type="email" id="blackEmailInput" placeholder="이메일" class="flex-1 p-3 border-2 border-slate-50 rounded-xl text-xs outline-none"><button id="btnAddBlack" class="bg-slate-900 text-white px-4 py-3 rounded-xl text-xs font-black shadow-md">차단</button></div><div id="blackListArea" class="space-y-1"></div></section>
+                <section><h4 class="font-black text-sm mb-3 text-indigo-600">📝 전체 예약 현황</h4><div id="adminList" class="space-y-2 text-xs bg-white p-3 rounded-2xl border max-h-60 overflow-y-auto"></div></section>
             </div>
+        </div>
+
+        <div id="authModal" class="modal-overlay">
+            <div class="modal-content w-[90%] bg-white max-w-sm p-8 rounded-[30px] shadow-2xl text-center"><h3 class="font-black text-xl mb-6">마을학교 로그인</h3><div class="space-y-3 mb-6"><input type="email" id="authEmail" placeholder="이메일" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"><input type="password" id="authPw" placeholder="비밀번호" class="w-full p-3 border-2 border-slate-50 rounded-xl bg-slate-50 font-bold outline-none"></div><div class="flex gap-2"><button id="btnSignUp" class="flex-1 py-3 border-2 border-emerald-100 text-emerald-600 font-bold rounded-xl text-sm">회원가입</button><button id="btnLoginEmail" class="flex-1 py-3 bg-emerald-600 text-white font-black rounded-xl text-sm">로그인</button></div></div>
         </div>
     </div>
     <div id="toast"></div>
@@ -99,7 +74,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyAskjE4h_8V9lr0tNt_Bt-BwWzZlVhJe-8", authDomain: "muge-43e73.firebaseapp.com", projectId: "muge-43e73", storageBucket: "muge-43e73.firebasestorage.app", messagingSenderId: "356856775293", appId: "1:356856775293:web:7ad8abaf66febd0a9be714" };
         const app = initializeApp(firebaseConfig);
@@ -109,36 +84,30 @@
         const isAdmin = (email) => ADMIN_EMAILS.includes(email);
 
         let currentDay = "";
-        let holidayList = [];
-        let blackList = [];
+        let holidayList = [], blackList = [], allReservations = [];
 
         function initTimeSlots() {
             const select = document.getElementById('modalTime'); select.innerHTML = "";
-            for (let h = 9; h <= 18; h++) { 
-                ['00', '30'].forEach(m => { if(h===18 && m==='30') return; const time = `${String(h).padStart(2, '0')}:${m}`; select.add(new Option(time, time)); }); 
-            }
+            for (let h = 9; h <= 18; h++) { ['00', '30'].forEach(m => { if(h===18 && m==='30') return; const t = `${String(h).padStart(2, '0')}:${m}`; select.add(new Option(t, t)); }); }
         }
         initTimeSlots();
 
         function showToast(m) { const t = document.getElementById("toast"); t.innerText = m; t.className = "show"; setTimeout(() => t.className = "", 3000); }
 
-        // 중복 방지 핵심 함수
-        async function checkReservedSlots() {
+        // 중복 체크 로직 (복합 색인 없이 작동하도록 필터링 방식 변경)
+        function checkReservedSlots() {
             const room = document.getElementById('modalRoom').value;
-            const q = query(collection(db, "reservations"), where("date", "==", currentDay), where("room", "==", room));
-            const snap = await getDocs(q);
-            const booked = snap.docs.map(d => d.data().shortTime);
+            const booked = allReservations.filter(r => r.date === currentDay && r.room === room).map(r => r.shortTime);
             
             Array.from(document.getElementById('modalTime').options).forEach(opt => {
                 const isBooked = booked.includes(opt.value);
                 opt.disabled = isBooked;
                 opt.text = isBooked ? `${opt.value} (예약됨)` : opt.value;
             });
-            // 만약 현재 선택된 옵션이 방금 disabled 되었다면, 가능한 첫 번째 옵션으로 변경
             const select = document.getElementById('modalTime');
             if (select.selectedOptions[0]?.disabled) {
-                const firstAvailable = Array.from(select.options).find(o => !o.disabled);
-                if (firstAvailable) select.value = firstAvailable.value;
+                const first = Array.from(select.options).find(o => !o.disabled);
+                if (first) select.value = first.value;
             }
         }
 
@@ -148,7 +117,7 @@
             if (holidayList.includes(currentDay)) { alert("오늘은 휴관일입니다."); return; }
             document.getElementById('modalDateDisplay').innerText = `${currentDay} 예약`;
             document.getElementById('bookingModal').style.display = 'flex';
-            await checkReservedSlots(); // 예약된 시간 체크
+            checkReservedSlots();
         }
 
         const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
@@ -156,17 +125,14 @@
             headerToolbar: { left: 'title', center: '', right: 'prev,next today dayGridMonth,timeGridWeek,dayView' },
             buttonText: { today: '오늘', month: '월', week: '주' },
             customButtons: { dayView: { text: '토', click: function() { 
-                const current = calendar.getDate(); const sat = new Date(current); sat.setDate(current.getDate() + (6 - current.getDay())); 
-                calendar.changeView('timeGridDay', sat); 
+                const current = calendar.getDate(); const sat = new Date(current); sat.setDate(current.getDate() + (6 - current.getDay())); calendar.changeView('timeGridDay', sat); 
             } } },
             dayCellClassNames: (arg) => {
                 const dStr = `${arg.date.getFullYear()}-${String(arg.date.getMonth() + 1).padStart(2, '0')}-${String(arg.date.getDate()).padStart(2, '0')}`;
                 return holidayList.includes(dStr) ? ['holiday-cell'] : [];
             },
             dateClick: (info) => openBookingModal(info.date),
-            eventClick: async (info) => {
-                if (confirm('삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("삭제됨"); }
-            },
+            eventClick: async (info) => { if (confirm('삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("삭제됨"); } },
             eventContent: (arg) => {
                 const nick = (arg.event.extendedProps.user || "").split('@')[0];
                 let cls = "bg-multi";
@@ -175,66 +141,55 @@
             }
         });
 
-        const loadAdminData = async () => {
-            const rSnap = await getDocs(query(collection(db, "reservations"), orderBy("date", "desc"), orderBy("shortTime", "asc")));
-            const list = document.getElementById('adminList'); list.innerHTML = rSnap.empty ? "예약 없음" : "";
-            rSnap.forEach(s => {
-                const d = s.data(); const div = document.createElement('div');
-                div.className = "flex justify-between items-center p-2 border-b last:border-0";
-                div.innerHTML = `<div><b>${d.date}</b> ${d.shortTime} [${d.room}] - ${d.user.split('@')[0]}</div><button onclick="deleteBooking('${s.id}')" class="text-red-500 font-bold">삭제</button>`;
+        const updateAdminUI = () => {
+            const list = document.getElementById('adminList'); list.innerHTML = allReservations.length === 0 ? "예약 없음" : "";
+            [...allReservations].sort((a,b) => b.time.localeCompare(a.time)).forEach(d => {
+                const div = document.createElement('div'); div.className = "flex justify-between items-center p-2 border-b";
+                div.innerHTML = `<div><b>${d.date}</b> ${d.shortTime} [${d.room}] - ${d.user.split('@')[0]}</div><button onclick="deleteBooking('${d.id}')" class="text-red-500 font-bold">삭제</button>`;
                 list.appendChild(div);
             });
-            const hSnap = await getDocs(collection(db, "holidays"));
             const hArea = document.getElementById('holidayListArea'); hArea.innerHTML = "";
-            hSnap.forEach(s => {
+            holidayList.forEach((date, index) => {
                 const div = document.createElement('div'); div.className = "bg-red-100 text-red-600 px-2 py-1 rounded-full text-[10px] flex items-center gap-1 font-bold";
-                div.innerHTML = `${s.data().date}<button onclick="removeHoliday('${s.id}')">×</button>`;
+                div.innerHTML = `${date}<button onclick="removeHolidayByDate('${date}')">×</button>`;
                 hArea.appendChild(div);
             });
-            const bSnap = await getDocs(collection(db, "blacklist"));
             const bArea = document.getElementById('blackListArea'); bArea.innerHTML = "";
-            bSnap.forEach(s => {
+            blackList.forEach(email => {
                 const div = document.createElement('div'); div.className = "flex justify-between text-xs p-2 bg-slate-100 rounded-lg";
-                div.innerHTML = `<span>${s.data().email}</span><button onclick="removeBlack('${s.id}')" class="text-red-500 font-bold">해제</button>`;
+                div.innerHTML = `<span>${email}</span><button onclick="removeBlackByEmail('${email}')" class="text-red-500 font-bold">해제</button>`;
                 bArea.appendChild(div);
             });
         };
 
-        window.deleteBooking = async (id) => { if(confirm('삭제?')) { await deleteDoc(doc(db, "reservations", id)); loadAdminData(); }};
-        window.removeHoliday = async (id) => { if(confirm('해제?')) { await deleteDoc(doc(db, "holidays", id)); loadAdminData(); }};
-        window.removeBlack = async (id) => { if(confirm('해제?')) { await deleteDoc(doc(db, "blacklist", id)); loadAdminData(); }};
-
-        document.getElementById('modalRoom').onchange = () => checkReservedSlots(); // 시설 변경 시 중복 체크
-
-        document.getElementById('btnAddHoliday').onclick = async () => {
-            const date = document.getElementById('holidayDateInput').value;
-            if(date) { await addDoc(collection(db, "holidays"), { date }); loadAdminData(); showToast("휴관 등록됨"); }
+        window.deleteBooking = async (id) => { if(confirm('삭제?')) { await deleteDoc(doc(db, "reservations", id)); }};
+        window.removeHolidayByDate = async (date) => { 
+            const snap = await getDocs(collection(db, "holidays"));
+            snap.forEach(async (s) => { if(s.data().date === date) await deleteDoc(doc(db, "holidays", s.id)); });
         };
-        document.getElementById('btnAddBlack').onclick = async () => {
-            const email = document.getElementById('blackEmailInput').value;
-            if(email) { await addDoc(collection(db, "blacklist"), { email }); loadAdminData(); showToast("차단 등록됨"); }
+        window.removeBlackByEmail = async (email) => {
+            const snap = await getDocs(collection(db, "blacklist"));
+            snap.forEach(async (s) => { if(s.data().email === email) await deleteDoc(doc(db, "blacklist", s.id)); });
         };
+
+        document.getElementById('modalRoom').onchange = () => checkReservedSlots();
+        document.getElementById('btnAddHoliday').onclick = async () => { const date = document.getElementById('holidayDateInput').value; if(date) await addDoc(collection(db, "holidays"), { date }); };
+        document.getElementById('btnAddBlack').onclick = async () => { const email = document.getElementById('blackEmailInput').value; if(email) await addDoc(collection(db, "blacklist"), { email }); };
 
         document.getElementById('btnConfirm').onclick = async () => {
             if(blackList.includes(auth.currentUser.email)) return alert("차단된 사용자입니다.");
-            const room = document.getElementById('modalRoom').value;
-            const shortTime = document.getElementById('modalTime').value;
-            
-            // 전송 직전 마지막 중복 확인 (안전장치)
-            const q = query(collection(db, "reservations"), where("date", "==", currentDay), where("room", "==", room), where("shortTime", "==", shortTime));
-            const check = await getDocs(q);
-            if(!check.empty) return alert("그새 다른 예약이 생겼습니다!");
-
+            const room = document.getElementById('modalRoom').value, shortTime = document.getElementById('modalTime').value;
+            if(allReservations.some(r => r.date === currentDay && r.room === room && r.shortTime === shortTime)) return alert("이미 예약된 시간입니다.");
             await addDoc(collection(db, "reservations"), { user: auth.currentUser.email, room, date: currentDay, time: `${currentDay}T${shortTime}`, shortTime });
             document.getElementById('bookingModal').style.display = 'none'; showToast("예약 완료!");
         };
 
-        document.getElementById('btnAdminOpen').onclick = () => { loadAdminData(); document.getElementById('adminModal').style.display = 'flex'; };
+        document.getElementById('btnAdminOpen').onclick = () => { updateAdminUI(); document.getElementById('adminModal').style.display = 'flex'; };
         document.getElementById('btnCloseBooking').onclick = () => document.getElementById('bookingModal').style.display = 'none';
         document.getElementById('btnCloseAdmin').onclick = () => document.getElementById('adminModal').style.display = 'none';
         document.getElementById('btnLoginEmail').onclick = () => {
             const e = document.getElementById('authEmail').value, p = document.getElementById('authPw').value;
-            signInWithEmailAndPassword(auth, e, p).catch(err => alert("로그인 실패"));
+            signInWithEmailAndPassword(auth, e, p).catch(err => alert("로그인 실패: " + err.message));
         };
         document.getElementById('btnLogout').onclick = () => signOut(auth);
         document.getElementById('agreeRules').onchange = (e) => {
@@ -242,11 +197,12 @@
             b.classList.toggle('bg-emerald-600', e.target.checked); b.classList.toggle('bg-slate-200', !e.target.checked);
         };
 
-        onSnapshot(collection(db, "holidays"), (snap) => { holidayList = snap.docs.map(doc => doc.data().date); calendar.render(); });
-        onSnapshot(collection(db, "blacklist"), (snap) => { blackList = snap.docs.map(doc => doc.data().email); });
+        onSnapshot(collection(db, "holidays"), (snap) => { holidayList = snap.docs.map(doc => doc.data().date); calendar.render(); updateAdminUI(); });
+        onSnapshot(collection(db, "blacklist"), (snap) => { blackList = snap.docs.map(doc => doc.data().email); updateAdminUI(); });
         onSnapshot(collection(db, "reservations"), (snap) => {
-            const evs = snap.docs.map(s => { const d = s.data(); return { id: s.id, title: d.room, start: d.time, extendedProps: { ...d } }; });
-            calendar.removeAllEvents(); calendar.addEventSource(evs);
+            allReservations = snap.docs.map(s => ({ id: s.id, ...s.data() }));
+            const evs = allReservations.map(d => ({ id: d.id, title: d.room, start: d.time, extendedProps: { ...d } }));
+            calendar.removeAllEvents(); calendar.addEventSource(evs); updateAdminUI();
         });
         onAuthStateChanged(auth, (u) => {
             document.getElementById('authModal').style.display = u ? 'none' : 'flex';
