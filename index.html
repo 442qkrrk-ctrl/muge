@@ -26,8 +26,8 @@
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        /* 일 보기에서 시간 축과 헤더에 마우스 커서 표시 */
-        .fc-timegrid-axis-cushion, .fc-col-header-cell-cushion { cursor: pointer !important; }
+        /* 왼쪽 시간 축과 헤더에 클릭 가능 표시 */
+        .fc-timegrid-axis-frame, .fc-col-header-cell-cushion { cursor: pointer !important; }
     </style>
 </head>
 <body class="p-1 md:p-8">
@@ -204,16 +204,16 @@
                 return holidayList.includes(dStr) ? ['holiday-cell'] : [];
             },
             dateClick: (info) => openBookingModal(info.date), 
-            // 캘린더 렌더링 후 시간/요일 클릭 강제 연동 (일 보기 대응)
+            // 캘린더가 갱신될 때마다 시간 축 클릭 바인딩 (일 보기 대응)
             datesSet: () => {
                 setTimeout(() => {
-                    // 왼쪽 시간 축 클릭 이벤트
-                    document.querySelectorAll('.fc-timegrid-axis-cushion').forEach(el => {
-                        el.onclick = () => openBookingModal(calendar.getDate());
+                    const axes = document.querySelectorAll('.fc-timegrid-axis-frame');
+                    axes.forEach(axis => {
+                        axis.onclick = () => openBookingModal(calendar.getDate());
                     });
-                    // 상단 요일 헤더 클릭 이벤트
-                    document.querySelectorAll('.fc-col-header-cell-cushion').forEach(el => {
-                        el.onclick = () => openBookingModal(calendar.getDate());
+                    const headers = document.querySelectorAll('.fc-col-header-cell-cushion');
+                    headers.forEach(h => {
+                        h.onclick = (e) => { e.preventDefault(); openBookingModal(calendar.getDate()); };
                     });
                 }, 100);
             },
