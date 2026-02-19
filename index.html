@@ -17,17 +17,23 @@
         .fc-day-sat { background-color: #eff6ff !important; } 
         .holiday-cell { background-color: #fee2e2 !important; position: relative; }
         .holiday-cell::after { content: '휴관'; position: absolute; bottom: 2px; right: 5px; font-size: 8px; color: #ef4444; font-weight: 900; }
-        .event-chip { font-size: 9px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; width: 100%; cursor: pointer; border: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* 이벤트 칩 디자인 최적화 */
+        .event-chip { font-size: 9px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; width: 100%; cursor: pointer; border: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 1px; }
         .bg-band { background-color: #10b981 !important; } .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; } .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
+        
+        /* 일 보기 겹침 방지 및 클릭 스타일 */
+        .fc-timegrid-slot-label-cushion { cursor: pointer !important; padding: 4px 8px !important; display: block; }
+        .fc-timegrid-event { margin-left: 2px !important; } /* 이벤트와 시간 숫자 간격 확보 */
+        .fc-timegrid-event-harness { padding-left: 1px !important; }
+
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; padding: 10px; }
         #toast { visibility: hidden; min-width: 200px; background-color: #1e293b; color: #fff; text-align: center; border-radius: 12px; padding: 12px; position: fixed; z-index: 10000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        /* 왼쪽 시간 축 강제 클릭 스타일 */
-        .fc-timegrid-axis-cushion, .fc-timegrid-slot-label-cushion { cursor: pointer !important; display: block; width: 100%; height: 100%; }
     </style>
 </head>
 <body class="p-1 md:p-8">
@@ -200,17 +206,11 @@
             buttonText: { today: '오늘', month: '월', week: '주', day: '일' },
             navLinkDayClick: (date) => openBookingModal(date), 
             dateClick: (info) => openBookingModal(info.date), 
-            // 핵심 수정: 렌더링될 때마다 왼쪽 시간 축에 클릭 이벤트 강제 주입
             datesSet: () => {
                 setTimeout(() => {
-                    // 모든 시간 슬롯 레이블(왼쪽 숫자 부분)을 찾아 이벤트 할당
-                    const timeLabels = document.querySelectorAll('.fc-timegrid-slot-label');
+                    const timeLabels = document.querySelectorAll('.fc-timegrid-slot-label-cushion');
                     timeLabels.forEach(label => {
-                        label.style.cursor = 'pointer';
-                        label.onclick = () => {
-                            // 현재 보고 있는 날짜를 기준으로 모달 오픈
-                            openBookingModal(calendar.getDate());
-                        };
+                        label.onclick = () => openBookingModal(calendar.getDate());
                     });
                 }, 100);
             },
