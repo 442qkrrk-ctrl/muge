@@ -26,8 +26,8 @@
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 40px; opacity: 1;} }
         @keyframes fadeout { from {bottom: 40px; opacity: 1;} to {bottom: 0; opacity: 0;} }
-        /* 왼쪽 시간 축과 헤더에 클릭 가능 표시 */
-        .fc-timegrid-axis-frame, .fc-col-header-cell-cushion { cursor: pointer !important; }
+        /* 왼쪽 시간 축 강제 클릭 스타일 */
+        .fc-timegrid-axis-cushion, .fc-timegrid-slot-label-cushion { cursor: pointer !important; display: block; width: 100%; height: 100%; }
     </style>
 </head>
 <body class="p-1 md:p-8">
@@ -199,21 +199,18 @@
             titleFormat: (date) => `${date.date.year}.${String(date.date.month + 1).padStart(2, '0')}.${String(date.date.day).padStart(2, '0')}.`,
             buttonText: { today: '오늘', month: '월', week: '주', day: '일' },
             navLinkDayClick: (date) => openBookingModal(date), 
-            dayCellClassNames: (arg) => {
-                const dStr = `${arg.date.getFullYear()}-${String(arg.date.getMonth() + 1).padStart(2, '0')}-${String(arg.date.getDate()).padStart(2, '0')}`;
-                return holidayList.includes(dStr) ? ['holiday-cell'] : [];
-            },
             dateClick: (info) => openBookingModal(info.date), 
-            // 캘린더가 갱신될 때마다 시간 축 클릭 바인딩 (일 보기 대응)
+            // 핵심 수정: 렌더링될 때마다 왼쪽 시간 축에 클릭 이벤트 강제 주입
             datesSet: () => {
                 setTimeout(() => {
-                    const axes = document.querySelectorAll('.fc-timegrid-axis-frame');
-                    axes.forEach(axis => {
-                        axis.onclick = () => openBookingModal(calendar.getDate());
-                    });
-                    const headers = document.querySelectorAll('.fc-col-header-cell-cushion');
-                    headers.forEach(h => {
-                        h.onclick = (e) => { e.preventDefault(); openBookingModal(calendar.getDate()); };
+                    // 모든 시간 슬롯 레이블(왼쪽 숫자 부분)을 찾아 이벤트 할당
+                    const timeLabels = document.querySelectorAll('.fc-timegrid-slot-label');
+                    timeLabels.forEach(label => {
+                        label.style.cursor = 'pointer';
+                        label.onclick = () => {
+                            // 현재 보고 있는 날짜를 기준으로 모달 오픈
+                            openBookingModal(calendar.getDate());
+                        };
                     });
                 }, 100);
             },
