@@ -162,6 +162,16 @@
             const d = new Date(date);
             currentDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             if (holidayList.includes(currentDay)) { alert("오늘은 휴관일입니다."); return; }
+            
+            // 일 보기에서 클릭했을 때 시간 자동 선택 로직
+            const hours = d.getHours();
+            const minutes = d.getMinutes();
+            if (hours >= 9 && hours <= 20) {
+                const roundedMinutes = minutes < 30 ? "00" : "30";
+                const timeStr = `${String(hours).padStart(2, '0')}:${roundedMinutes}`;
+                document.getElementById('modalTime').value = timeStr;
+            }
+
             document.getElementById('modalUserName').value = "";
             document.getElementById('agreeRules').checked = false;
             const b = document.getElementById('btnConfirm');
@@ -181,7 +191,6 @@
             handleWindowResize: true,
             aspectRatio: 0.85, 
             height: 'auto',
-            // 툴바 설정 수정: 'timeGridDay' 추가
             headerToolbar: { 
                 left: 'title', 
                 center: '', 
@@ -193,13 +202,13 @@
                 const day = String(date.date.day).padStart(2, '0');
                 return `${year}.${month}.${day}.`;
             },
-            buttonText: { today: '오늘', month: '월', week: '주', day: '일' }, // '일' 텍스트 추가
+            buttonText: { today: '오늘', month: '월', week: '주', day: '일' },
             navLinkDayClick: (date) => openBookingModal(date),
             dayCellClassNames: (arg) => {
                 const dStr = `${arg.date.getFullYear()}-${String(arg.date.getMonth() + 1).padStart(2, '0')}-${String(arg.date.getDate()).padStart(2, '0')}`;
                 return holidayList.includes(dStr) ? ['holiday-cell'] : [];
             },
-            dateClick: (info) => openBookingModal(info.date),
+            dateClick: (info) => openBookingModal(info.date), // 월/주/일 모든 뷰에서 클릭 시 팝업 실행
             eventClick: async (info) => { 
                 if (auth.currentUser.email === info.event.extendedProps.user || isAdmin(auth.currentUser.email)) {
                     if (confirm('예약을 삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("삭제됨"); } 
@@ -219,7 +228,6 @@
             const list = document.getElementById('adminList'); list.innerHTML = allReservations.length === 0 ? "예약 없음" : "";
             [...allReservations].sort((a,b) => b.time.localeCompare(a.time)).forEach(d => {
                 const div = document.createElement('div'); div.className = "flex justify-between items-center p-2 border-b";
-                // 관리자 모드: 이름과 이메일 함께 표시 유지
                 div.innerHTML = `<div><b>${d.date}</b> ${d.shortTime} [${d.room}] - <b>${d.userName || '이름없음'}</b> <span class="text-slate-400">(${d.user})</span></div><button onclick="deleteBooking('${d.id}')" class="text-red-500 font-bold">삭제</button>`;
                 list.appendChild(div);
             });
