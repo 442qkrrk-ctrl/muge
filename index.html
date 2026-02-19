@@ -15,18 +15,33 @@
         .fc-toolbar-title { font-size: 1rem !important; font-weight: 900 !important; color: #065f46; }
         .fc-button { font-size: 0.75rem !important; padding: 0.4em 0.6em !important; }
         .fc-day-sat { background-color: #eff6ff !important; } 
+
+        /* 휴관일 스타일 (모든 뷰 공통) */
         .holiday-cell { background-color: #fee2e2 !important; position: relative; }
-        .holiday-cell::after { content: '휴관'; position: absolute; bottom: 2px; right: 5px; font-size: 8px; color: #ef4444; font-weight: 900; }
+        .holiday-cell::after { content: '휴관'; position: absolute; bottom: 4px; right: 5px; font-size: 10px; color: #ef4444; font-weight: 900; z-index: 5; }
         
-        /* 이벤트 칩 디자인 최적화 */
+        /* 주/일 보기 휴관 오버레이 */
+        .fc-timegrid-col.holiday-cell::before {
+            content: '휴관일입니다';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: rgba(239, 68, 68, 0.15);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1;
+        }
+
         .event-chip { font-size: 9px; padding: 2px 4px; border-radius: 4px; color: white; font-weight: 700; width: 100%; cursor: pointer; border: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 1px; }
         .bg-band { background-color: #10b981 !important; } .bg-bread { background-color: #f59e0b !important; }
         .bg-work { background-color: #6366f1 !important; } .bg-study { background-color: #3b82f6 !important; }
         .bg-multi { background-color: #ec4899 !important; }
         
-        /* 일 보기 겹침 방지 및 클릭 스타일 */
         .fc-timegrid-slot-label-cushion { cursor: pointer !important; padding: 4px 8px !important; display: block; }
-        .fc-timegrid-event { margin-left: 2px !important; } /* 이벤트와 시간 숫자 간격 확보 */
+        .fc-timegrid-event { margin-left: 2px !important; }
         .fc-timegrid-event-harness { padding-left: 1px !important; }
 
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; padding: 10px; }
@@ -205,12 +220,30 @@
             titleFormat: (date) => `${date.date.year}.${String(date.date.month + 1).padStart(2, '0')}.${String(date.date.day).padStart(2, '0')}.`,
             buttonText: { today: '오늘', month: '월', week: '주', day: '일' },
             navLinkDayClick: (date) => openBookingModal(date), 
-            dateClick: (info) => openBookingModal(info.date), 
+            dateClick: (info) => openBookingModal(info.date),
+            // 핵심: 모든 뷰에서 휴관일 클래스 적용
+            dayCellClassNames: (arg) => {
+                const dStr = `${arg.date.getFullYear()}-${String(arg.date.getMonth() + 1).padStart(2, '0')}-${String(arg.date.getDate()).padStart(2, '0')}`;
+                return holidayList.includes(dStr) ? ['holiday-cell'] : [];
+            },
+            // 주/일 보기에서 슬롯 영역에도 휴관일 표시
+            nowIndicator: true,
             datesSet: () => {
                 setTimeout(() => {
                     const timeLabels = document.querySelectorAll('.fc-timegrid-slot-label-cushion');
                     timeLabels.forEach(label => {
                         label.onclick = () => openBookingModal(calendar.getDate());
+                    });
+                    
+                    // 주/일 보기 슬롯 영역 휴관일 클래스 수동 보정 (v1.9.9 핵심 보완)
+                    const gridCols = document.querySelectorAll('.fc-timegrid-col');
+                    gridCols.forEach(col => {
+                        const dateAttr = col.getAttribute('data-date');
+                        if (dateAttr && holidayList.includes(dateAttr)) {
+                            col.classList.add('holiday-cell');
+                        } else {
+                            col.classList.remove('holiday-cell');
+                        }
                     });
                 }, 100);
             },
