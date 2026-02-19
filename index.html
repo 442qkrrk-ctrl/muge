@@ -163,10 +163,10 @@
             currentDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             if (holidayList.includes(currentDay)) { alert("오늘은 휴관일입니다."); return; }
             
-            // 일 보기에서 클릭했을 때 시간 자동 선택 로직
+            // 시간 자동 선택 로직 (시간이 있는 클릭인 경우에만 작동)
             const hours = d.getHours();
-            const minutes = d.getMinutes();
-            if (hours >= 9 && hours <= 20) {
+            if (!isNaN(hours) && hours >= 9 && hours <= 20) {
+                const minutes = d.getMinutes();
                 const roundedMinutes = minutes < 30 ? "00" : "30";
                 const timeStr = `${String(hours).padStart(2, '0')}:${roundedMinutes}`;
                 document.getElementById('modalTime').value = timeStr;
@@ -203,12 +203,13 @@
                 return `${year}.${month}.${day}.`;
             },
             buttonText: { today: '오늘', month: '월', week: '주', day: '일' },
-            navLinkDayClick: (date) => openBookingModal(date),
+            // 요일 제목 클릭 시 예약 팝업이 뜨도록 강제 설정
+            navLinkDayClick: (date) => openBookingModal(date), 
             dayCellClassNames: (arg) => {
                 const dStr = `${arg.date.getFullYear()}-${String(arg.date.getMonth() + 1).padStart(2, '0')}-${String(arg.date.getDate()).padStart(2, '0')}`;
                 return holidayList.includes(dStr) ? ['holiday-cell'] : [];
             },
-            dateClick: (info) => openBookingModal(info.date), // 월/주/일 모든 뷰에서 클릭 시 팝업 실행
+            dateClick: (info) => openBookingModal(info.date), 
             eventClick: async (info) => { 
                 if (auth.currentUser.email === info.event.extendedProps.user || isAdmin(auth.currentUser.email)) {
                     if (confirm('예약을 삭제하시겠습니까?')) { await deleteDoc(doc(db, "reservations", info.event.id)); showToast("삭제됨"); } 
